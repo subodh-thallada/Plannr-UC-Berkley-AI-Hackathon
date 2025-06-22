@@ -11,12 +11,47 @@ import { useProject } from "@/lib/project-context";
 import { callVenue, getCurrentCallStatus, endCall, CallStatus, callRestaurant } from "@/lib/vapi-service";
 
 export const ProjectPanel = () => {
-  const [viewFilter, setViewFilter] = useState<'home' | '1' | '2' | '3'>('home');
+  const [viewType, setViewType] = useState<'timeline' | 'category'>('timeline');
+  const [viewFilter, setViewFilter] = useState<'home' | '1' | '2' | '3' | 'logistics' | 'marketing' | 'website' | 'outreach'>('home');
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editingColors, setEditingColors] = useState<{ primary: string; secondary: string }>({ primary: '#3B82F6', secondary: '#10B981' });
   const [callStatus, setCallStatus] = useState<CallStatus>({ id: '', status: 'idle' });
   const { phases, togglePhase, toggleTask, updateTask } = useProject();
+
+  // Task to category mapping
+  const taskCategoryMap: Record<string, 'logistics' | 'marketing' | 'website' | 'outreach'> = {
+    // Phase 1
+    '1-1': 'logistics', // Timeline
+    '1-2': 'logistics', // Theme
+    '1-3': 'logistics', // Location
+    '1-4': 'logistics', // Size
+    '1-5': 'marketing', // Branding
+    // Phase 2
+    '2-1': 'website',   // Make website
+    '2-2': 'marketing', // Make marketing posts and images
+    '2-3': 'marketing', // Make sponsorship package
+    '2-4': 'logistics', // Book Venue
+    '2-5': 'logistics', // Plan Meals
+    // Phase 3
+    '3-1': 'website',   // Make Discord channels
+    '3-2': 'outreach',  // Automatically send sponsors the emails
+    '3-3': 'outreach',  // Email people to mentor + volunteer
+  };
+
+  // Group tasks by category
+  const categoryTasks: Record<string, any[]> = {
+    logistics: [],
+    marketing: [],
+    website: [],
+    outreach: [],
+  };
+  phases.forEach(phase => {
+    phase.tasks.forEach(task => {
+      const cat = taskCategoryMap[task.id];
+      if (cat) categoryTasks[cat].push({ ...task, phase });
+    });
+  });
 
   const getStatusColor = (status: 'pending' | 'in-progress' | 'done') => {
     switch (status) {
@@ -199,116 +234,520 @@ export const ProjectPanel = () => {
     ? phases
     : phases.filter(p => p.id === viewFilter);
 
+  // UI for view type toggle
+  const viewTypeToggle = (
+    <div className="flex justify-center w-full mb-4 mt-4">
+      <div className="flex gap-1 px-2 py-1 rounded-full bg-white/70 backdrop-blur-xl shadow-lg border border-blue-100">
+        <Button
+          variant={viewType === 'timeline' ? 'default' : 'outline'}
+          onClick={() => { setViewType('timeline'); setViewFilter('home'); }}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewType === 'timeline' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+        >
+          Timeline View
+        </Button>
+        <Button
+          variant={viewType === 'category' ? 'default' : 'outline'}
+          onClick={() => { setViewType('category'); setViewFilter('logistics'); }}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewType === 'category' ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+        >
+          Category View
+        </Button>
+      </div>
+    </div>
+  );
+
+  // UI for category nav (no Home button)
+  const categoryNav = (
+    <div className="flex justify-center w-full mb-4">
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/70 backdrop-blur-xl shadow-lg border border-blue-100">
+        <Button
+          variant={viewFilter === 'logistics' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('logistics')}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === 'logistics' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+        >
+          Logistics
+        </Button>
+        <Button
+          variant={viewFilter === 'marketing' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('marketing')}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === 'marketing' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+        >
+          Marketing
+        </Button>
+        <Button
+          variant={viewFilter === 'website' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('website')}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === 'website' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+        >
+          Website
+        </Button>
+        <Button
+          variant={viewFilter === 'outreach' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('outreach')}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === 'outreach' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+        >
+          Outreach
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
-      {/* Top Navigation Bar */}
-      <div className="flex items-center gap-2 p-4 border-b border-blue-100 bg-white/70 backdrop-blur-xl shadow-lg rounded-b-2xl">
-        <Button
-          variant={viewFilter === 'home' ? 'default' : 'outline'}
-          onClick={() => setViewFilter('home')}
-          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === 'home' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
-        >
-          Home
-        </Button>
-        <Button
-          variant={viewFilter === '1' ? 'default' : 'outline'}
-          onClick={() => setViewFilter('1')}
-          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === '1' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
-        >
-          Phase 1: Overview
-        </Button>
-        <Button
-          variant={viewFilter === '2' ? 'default' : 'outline'}
-          onClick={() => setViewFilter('2')}
-          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === '2' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
-        >
-          Phase 2: Preparation
-        </Button>
-        <Button
-          variant={viewFilter === '3' ? 'default' : 'outline'}
-          onClick={() => setViewFilter('3')}
-          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === '3' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
-        >
-          Phase 3: Execution
-        </Button>
-      </div>
-
-      {/* Header */}
-      <div className="p-8 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl">
-        <div className="flex items-center justify-between">
-          <div>
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight drop-shadow-sm">Project Management</h1>
-        <p className="text-lg text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
+      {viewTypeToggle}
+      {viewType === 'timeline' ? (
+        // Timeline/phase view (as before)
+        <>
+          {/* Top Navigation Bar */}
+          <div className="flex justify-center w-full mb-4">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/70 backdrop-blur-xl shadow-lg border border-blue-100">
+              <Button
+                variant={viewFilter === 'home' ? 'default' : 'outline'}
+                onClick={() => setViewFilter('home')}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === 'home' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+              >
+                Home
+              </Button>
+              <Button
+                variant={viewFilter === '1' ? 'default' : 'outline'}
+                onClick={() => setViewFilter('1')}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '1' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+              >
+                Phase 1: Overview
+              </Button>
+              <Button
+                variant={viewFilter === '2' ? 'default' : 'outline'}
+                onClick={() => setViewFilter('2')}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '2' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+              >
+                Phase 2: Preparation
+              </Button>
+              <Button
+                variant={viewFilter === '3' ? 'default' : 'outline'}
+                onClick={() => setViewFilter('3')}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '3' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+              >
+                Phase 3: Execution
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+          {/* Header */}
+          <div className="px-8 pt-2 pb-4 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl flex flex-col items-start">
+            <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight drop-shadow-sm">Project Management</h1>
+            <p className="text-base text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
+          </div>
+          {/* Project Phases */}
+          <ScrollArea className="flex-1">
+            <div className="p-8 space-y-8">
+              {filteredPhases.map((phase) => {
+                const progress = getPhaseProgress(phase);
+                return (
+                  <Card key={phase.id} className="bg-white/70 backdrop-blur-2xl border border-blue-100 shadow-2xl rounded-3xl transition-transform duration-200 hover:scale-[1.01]">
+                    <Collapsible open={phase.isOpen} onOpenChange={() => togglePhase(phase.id)}>
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex items-center justify-between p-6 hover:bg-gradient-to-r hover:from-blue-50/70 hover:to-green-50/70 transition-colors rounded-t-3xl">
+                          <div className="flex items-center space-x-4">
+                            {phase.isOpen ? (
+                              <ChevronDown className="w-6 h-6 text-blue-600" />
+                            ) : (
+                              <ChevronRight className="w-6 h-6 text-blue-600" />
+                            )}
+                            <span className="text-2xl drop-shadow font-bold">{phase.icon}</span>
+                            <div className="text-left">
+                              <h3 className="font-bold text-gray-900 text-lg tracking-tight">{phase.name}</h3>
+                              <p className="text-sm text-gray-500 font-medium">
+                                {progress.completed}/{progress.total} tasks completed
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-blue-500 via-green-400 to-green-300 h-3 rounded-full transition-all duration-500 animate-pulse"
+                                style={{
+                                  width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%`
+                                }}
+                              />
+                            </div>
+                            <span className="text-base text-gray-500 font-semibold">
+                              {progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0}%
+                            </span>
+                          </div>
+                        </div>
+                      </CollapsibleTrigger>
 
-      {/* Project Phases */}
-      <ScrollArea className="flex-1">
-        <div className="p-8 space-y-8">
-          {filteredPhases.map((phase) => {
-            const progress = getPhaseProgress(phase);
-            return (
-              <Card key={phase.id} className="bg-white/70 backdrop-blur-2xl border border-blue-100 shadow-2xl rounded-3xl transition-transform duration-200 hover:scale-[1.01]">
-                <Collapsible open={phase.isOpen} onOpenChange={() => togglePhase(phase.id)}>
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-6 hover:bg-gradient-to-r hover:from-blue-50/70 hover:to-green-50/70 transition-colors rounded-t-3xl">
-                      <div className="flex items-center space-x-4">
-                        {phase.isOpen ? (
-                          <ChevronDown className="w-6 h-6 text-blue-600" />
-                        ) : (
-                          <ChevronRight className="w-6 h-6 text-blue-600" />
-                        )}
-                        <span className="text-2xl drop-shadow font-bold">{phase.icon}</span>
-                        <div className="text-left">
-                          <h3 className="font-bold text-gray-900 text-lg tracking-tight">{phase.name}</h3>
-                          <p className="text-sm text-gray-500 font-medium">
-                            {progress.completed}/{progress.total} tasks completed
-                          </p>
+                      <CollapsibleContent>
+                        <div className="px-6 pb-6 border-t border-blue-100">
+                          <div className="space-y-4 mt-6">
+                            {phase.tasks.map((task) => (
+                              <div
+                                key={task.id}
+                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 shadow-md group ${
+                                  task.completed
+                                    ? 'bg-gradient-to-r from-green-50/80 to-green-100/80 border-green-200'
+                                    : 'bg-white/90 border-gray-200 hover:border-blue-300 hover:shadow-lg'
+                                }`}
+                              >
+                                <div className="flex items-center space-x-4 flex-1">
+                                  <Checkbox
+                                    checked={task.completed}
+                                    onCheckedChange={() => toggleTask(phase.id, task.id)}
+                                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 scale-125 shadow-sm"
+                                  />
+                                  <div className="flex-1">
+                                    <span
+                                      className={`font-semibold text-lg transition-all duration-200 ${
+                                        task.completed ? 'text-gray-400 line-through' : 'text-gray-900'
+                                      }`}
+                                    >
+                                      {task.name}
+                                    </span>
+                                    {editingTask === task.id ? (
+                                      <div className="mt-2 flex items-center space-x-3 animate-fade-in">
+                                        <Info className="w-4 h-4 text-blue-600" />
+                                        {task.name === 'Branding' ? (
+                                          <div className="flex items-center space-x-3 flex-1">
+                                            <div className="flex items-center space-x-2">
+                                              <label className="text-xs text-gray-600">Primary:</label>
+                                              <input
+                                                type="color"
+                                                value={editingColors.primary}
+                                                onChange={(e) => setEditingColors(prev => ({ ...prev, primary: e.target.value }))}
+                                                className="w-8 h-8 border border-gray-300 rounded-full cursor-pointer shadow"
+                                              />
+                                              <span className="text-xs font-mono">{editingColors.primary}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                              <label className="text-xs text-gray-600">Secondary:</label>
+                                              <input
+                                                type="color"
+                                                value={editingColors.secondary}
+                                                onChange={(e) => setEditingColors(prev => ({ ...prev, secondary: e.target.value }))}
+                                                className="w-8 h-8 border border-gray-300 rounded-full cursor-pointer shadow"
+                                              />
+                                              <span className="text-xs font-mono">{editingColors.secondary}</span>
+                                            </div>
+                                            <Button
+                                              size="sm"
+                                              onClick={() => handleSaveColors(phase.id, task.id)}
+                                              className="h-8 px-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow hover:scale-105"
+                                            >
+                                              <Save className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={handleCancelEdit}
+                                              className="h-8 px-3 rounded-full shadow"
+                                            >
+                                              <X className="w-4 h-4" />
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center space-x-3 flex-1">
+                                            <Input
+                                              value={editValue}
+                                              onChange={(e) => setEditValue(e.target.value)}
+                                              className="text-sm border-blue-200 focus:border-blue-400 rounded-full px-4 py-2 shadow"
+                                              placeholder={getTaskPlaceholder(task.name)}
+                                              onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  handleSaveEdit(phase.id, task.id);
+                                                } else if (e.key === 'Escape') {
+                                                  handleCancelEdit();
+                                                }
+                                              }}
+                                              autoFocus
+                                            />
+                                            <Button
+                                              size="sm"
+                                              onClick={() => handleSaveEdit(phase.id, task.id)}
+                                              className="h-8 px-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow hover:scale-105"
+                                            >
+                                              <Save className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={handleCancelEdit}
+                                              className="h-8 px-3 rounded-full shadow"
+                                            >
+                                              <X className="w-4 h-4" />
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : task.name === 'Branding' && task.colors ? (
+                                      <div className="mt-2 flex items-center space-x-2">
+                                        <Info className="w-4 h-4 text-blue-600" />
+                                        <div className="flex items-center space-x-2">
+                                          <div className="flex items-center space-x-2">
+                                            <div 
+                                              className="w-5 h-5 rounded-full border border-gray-300 shadow" 
+                                              style={{ backgroundColor: task.colors.primary }}
+                                            />
+                                            <span className="text-xs text-gray-600 font-mono">{task.colors.primary}</span>
+                                          </div>
+                                          <span className="text-xs text-gray-400">+</span>
+                                          <div className="flex items-center space-x-2">
+                                            <div 
+                                              className="w-5 h-5 rounded-full border border-gray-300 shadow" 
+                                              style={{ backgroundColor: task.colors.secondary }}
+                                            />
+                                            <span className="text-xs text-gray-600 font-mono">{task.colors.secondary}</span>
+                                          </div>
+                                          {task.source && (
+                                            <span className="text-xs text-gray-400 ml-2" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
+                                              {task.source === 'chatbot' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                                            </span>
+                                          )}
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleEditTask(task.id, task.details || "", task.colors)}
+                                            className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full"
+                                          >
+                                            <Edit2 className="w-4 h-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleClearDetails(phase.id, task.id)}
+                                            className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full"
+                                            title="Clear colors"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : task.name === 'Branding' && !task.colors ? (
+                                      <div className="mt-2 flex items-center space-x-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleEditTask(task.id, "", { primary: '#3B82F6', secondary: '#10B981' })}
+                                          className="h-8 px-3 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full shadow"
+                                        >
+                                          <Edit2 className="w-4 h-4 mr-1" />
+                                          Add colors
+                                        </Button>
+                                      </div>
+                                    ) : task.details ? (
+                                      <div className="mt-2 flex items-center space-x-2">
+                                        <Info className="w-4 h-4 text-blue-600" />
+                                        <div className="flex items-center space-x-2">
+                                        <span className="text-xs text-blue-700 bg-blue-50 px-3 py-1 rounded-full font-semibold shadow-sm">
+                                          {task.details}
+                                        </span>
+                                          {task.source && (
+                                            <span className="text-xs text-gray-400 ml-2" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
+                                              {task.source === 'chatbot' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                                            </span>
+                                          )}
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleEditTask(task.id, task.details || "", task.colors)}
+                                            className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full"
+                                          >
+                                            <Edit2 className="w-4 h-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleClearDetails(phase.id, task.id)}
+                                            className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full"
+                                            title="Clear details"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="mt-2 flex items-center space-x-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleEditTask(task.id, "", task.colors)}
+                                          className="h-8 px-3 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full shadow"
+                                        >
+                                          <Edit2 className="w-4 h-4 mr-1" />
+                                          Add details
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center space-x-3">
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-xs rounded-full px-3 py-1 font-bold shadow-sm border-2 ${getStatusColor(task.status)}`}
+                                  >
+                                    {getStatusLabel(task.status)}
+                                  </Badge>
+                                  {/* Call Venue Button for Book Venue task */}
+                                  {task.name === 'Book Venue' && (
+                                    <div className="flex items-center space-x-1">
+                                      {callStatus.status === 'idle' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handleCallVenue}
+                                          className="h-8 px-3 text-xs bg-gradient-to-r from-green-400 to-blue-400 text-white border-none shadow rounded-full hover:scale-105"
+                                          title="Call venue at +17165134580"
+                                        >
+                                          <Phone className="w-4 h-4 mr-1" />
+                                          Call Venue
+                                        </Button>
+                                      )}
+                                      {callStatus.status === 'calling' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          disabled
+                                          className="h-8 px-3 text-xs bg-blue-100 text-blue-700 border-blue-200 rounded-full shadow animate-pulse"
+                                        >
+                                          <Phone className="w-4 h-4 mr-1 animate-pulse" />
+                                          Calling...
+                                        </Button>
+                                      )}
+                                      {callStatus.status === 'connected' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handleEndCall}
+                                          className="h-8 px-3 text-xs bg-gradient-to-r from-red-400 to-pink-400 text-white border-none shadow rounded-full hover:scale-105"
+                                          title="End call"
+                                        >
+                                          <Phone className="w-4 h-4 mr-1" />
+                                          End Call
+                                        </Button>
+                                      )}
+                                      {callStatus.status === 'error' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handleCallVenue}
+                                          className="h-8 px-3 text-xs bg-gradient-to-r from-orange-400 to-yellow-400 text-white border-none shadow rounded-full hover:scale-105"
+                                          title={`Retry call: ${callStatus.error}`}
+                                        >
+                                          <Phone className="w-4 h-4 mr-1" />
+                                          Retry
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+                                  {/* Call Restaurant Button for Plan Meals task */}
+                                  {task.name === 'Plan Meals' && (
+                                    <div className="flex items-center space-x-1">
+                                      {callStatus.status === 'idle' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handleCallRestaurant}
+                                          className="h-8 px-3 text-xs bg-gradient-to-r from-green-400 to-blue-400 text-white border-none shadow rounded-full hover:scale-105"
+                                          title="Call restaurant at +17165134580"
+                                        >
+                                          <Phone className="w-4 h-4 mr-1" />
+                                          Call Restaurant
+                                        </Button>
+                                      )}
+                                      {callStatus.status === 'calling' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          disabled
+                                          className="h-8 px-3 text-xs bg-blue-100 text-blue-700 border-blue-200 rounded-full shadow animate-pulse"
+                                        >
+                                          <Phone className="w-4 h-4 mr-1 animate-pulse" />
+                                          Calling...
+                                        </Button>
+                                      )}
+                                      {callStatus.status === 'connected' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handleEndRestaurantCall}
+                                          className="h-8 px-3 text-xs bg-gradient-to-r from-red-400 to-pink-400 text-white border-none shadow rounded-full hover:scale-105"
+                                          title="End call"
+                                        >
+                                          <Phone className="w-4 h-4 mr-1" />
+                                          End Call
+                                        </Button>
+                                      )}
+                                      {callStatus.status === 'error' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={handleCallRestaurant}
+                                          className="h-8 px-3 text-xs bg-gradient-to-r from-orange-400 to-yellow-400 text-white border-none shadow rounded-full hover:scale-105"
+                                          title={`Retry call: ${callStatus.error}`}
+                                        >
+                                          <Phone className="w-4 h-4 mr-1" />
+                                          Retry
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 shadow"
+                                  >
+                                    <Settings className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
-                          <div
-                            className="bg-gradient-to-r from-blue-500 via-green-400 to-green-300 h-3 rounded-full transition-all duration-500 animate-pulse"
-                            style={{
-                              width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%`
-                            }}
-                          />
-                        </div>
-                        <span className="text-base text-gray-500 font-semibold">
-                          {progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0}%
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </Card>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </>
+      ) : (
+        // Category view
+        <>
+          {categoryNav}
+          {/* Header for category view */}
+          <div className="px-8 pt-2 pb-4 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl flex flex-col items-start">
+            <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight drop-shadow-sm">Project Management</h1>
+            <p className="text-base text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-8 space-y-8">
+              {['logistics', 'marketing', 'website', 'outreach'].map(category => (
+                viewFilter === category && (
+                  <Card key={category} className="bg-white/70 backdrop-blur-2xl border border-blue-100 shadow-2xl rounded-3xl">
+                    <div className="p-6">
+                      <div className="flex items-center mb-6 gap-3">
+                        {/* Add icons for each category */}
+                        <span className="text-3xl">
+                          {category === 'logistics' && '🚚'}
+                          {category === 'marketing' && '📢'}
+                          {category === 'website' && '💻'}
+                          {category === 'outreach' && '🤝'}
                         </span>
+                        <h2 className="text-2xl font-extrabold capitalize tracking-tight drop-shadow-sm">{category}</h2>
                       </div>
-                    </div>
-                  </CollapsibleTrigger>
-
-                  <CollapsibleContent>
-                    <div className="px-6 pb-6 border-t border-blue-100">
-                      <div className="space-y-4 mt-6">
-                        {phase.tasks.map((task) => (
-                          <div
-                            key={task.id}
-                            className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 shadow-md group ${
-                              task.completed
-                                ? 'bg-gradient-to-r from-green-50/80 to-green-100/80 border-green-200'
-                                : 'bg-white/90 border-gray-200 hover:border-blue-300 hover:shadow-lg'
-                            }`}
-                          >
+                      <div className="space-y-4">
+                        {categoryTasks[category].map(task => (
+                          <div key={task.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 shadow-md group ${task.completed ? 'bg-gradient-to-r from-green-50/80 to-green-100/80 border-green-200' : 'bg-white/90 border-gray-200 hover:border-blue-300 hover:shadow-lg'}`}>
                             <div className="flex items-center space-x-4 flex-1">
                               <Checkbox
                                 checked={task.completed}
-                                onCheckedChange={() => toggleTask(phase.id, task.id)}
+                                onCheckedChange={() => toggleTask(task.phase.id, task.id)}
                                 className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 scale-125 shadow-sm"
                               />
                               <div className="flex-1">
-                                <span
-                                  className={`font-semibold text-lg transition-all duration-200 ${
-                                    task.completed ? 'text-gray-400 line-through' : 'text-gray-900'
-                                  }`}
-                                >
-                                  {task.name}
-                                </span>
+                                <span className={`font-semibold text-lg transition-all duration-200 ${task.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.name}</span>
+                                <span className="ml-2 text-xs text-gray-400">({task.phase.name})</span>
+                                {/* --- Details, editing, branding, etc. --- */}
                                 {editingTask === task.id ? (
                                   <div className="mt-2 flex items-center space-x-3 animate-fade-in">
                                     <Info className="w-4 h-4 text-blue-600" />
@@ -336,7 +775,7 @@ export const ProjectPanel = () => {
                                         </div>
                                         <Button
                                           size="sm"
-                                          onClick={() => handleSaveColors(phase.id, task.id)}
+                                          onClick={() => handleSaveColors(task.phase.id, task.id)}
                                           className="h-8 px-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow hover:scale-105"
                                         >
                                           <Save className="w-4 h-4" />
@@ -359,7 +798,7 @@ export const ProjectPanel = () => {
                                           placeholder={getTaskPlaceholder(task.name)}
                                           onKeyPress={(e) => {
                                             if (e.key === 'Enter') {
-                                              handleSaveEdit(phase.id, task.id);
+                                              handleSaveEdit(task.phase.id, task.id);
                                             } else if (e.key === 'Escape') {
                                               handleCancelEdit();
                                             }
@@ -368,7 +807,7 @@ export const ProjectPanel = () => {
                                         />
                                         <Button
                                           size="sm"
-                                          onClick={() => handleSaveEdit(phase.id, task.id)}
+                                          onClick={() => handleSaveEdit(task.phase.id, task.id)}
                                           className="h-8 px-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow hover:scale-105"
                                         >
                                           <Save className="w-4 h-4" />
@@ -419,7 +858,7 @@ export const ProjectPanel = () => {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleClearDetails(phase.id, task.id)}
+                                        onClick={() => handleClearDetails(task.phase.id, task.id)}
                                         className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full"
                                         title="Clear colors"
                                       >
@@ -462,7 +901,7 @@ export const ProjectPanel = () => {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleClearDetails(phase.id, task.id)}
+                                        onClick={() => handleClearDetails(task.phase.id, task.id)}
                                         className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full"
                                         title="Clear details"
                                       >
@@ -485,7 +924,6 @@ export const ProjectPanel = () => {
                                 )}
                               </div>
                             </div>
-
                             <div className="flex items-center space-x-3">
                               <Badge
                                 variant="outline"
@@ -609,13 +1047,13 @@ export const ProjectPanel = () => {
                         ))}
                       </div>
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            );
-          })}
-        </div>
-      </ScrollArea>
+                  </Card>
+                )
+              ))}
+            </div>
+          </ScrollArea>
+        </>
+      )}
     </div>
   );
 };
