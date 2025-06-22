@@ -371,14 +371,14 @@ export const ProjectPanel = () => {
         <Button
           variant={viewType === 'timeline' ? 'default' : 'outline'}
           onClick={() => { setViewType('timeline'); setViewFilter('home'); }}
-          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewType === 'timeline' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewType === 'timeline' ? 'bg-[#3B82F6] text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
         >
           Timeline View
         </Button>
         <Button
           variant={viewType === 'category' ? 'default' : 'outline'}
           onClick={() => { setViewType('category'); setViewFilter('logistics'); }}
-          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewType === 'category' ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+          className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewType === 'category' ? 'bg-[#3B82F6] text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
         >
           Category View
         </Button>
@@ -542,9 +542,9 @@ export const ProjectPanel = () => {
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header always at the top */}
-      <div className="px-8 pt-2 pb-4 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl flex flex-col items-start">
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight drop-shadow-sm">Project Management</h1>
-        <p className="text-base text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
+      <div className="px-8 pt-2 pb-4 bg-[#1F2937] border-b border-blue-100 shadow-md rounded-b-3xl flex flex-col items-start">
+        <h1 className="text-2xl font-extrabold text-[#E0F2FE] mb-1 tracking-tight drop-shadow-sm">plannr</h1>
+        <p className="text-base font-medium text-[#E0F2FE]">making hackathon organizing easy.</p>
       </div>
       {viewTypeToggle}
       {viewType === 'timeline' ? (
@@ -556,28 +556,28 @@ export const ProjectPanel = () => {
               <Button
                 variant={viewFilter === 'home' ? 'default' : 'outline'}
                 onClick={() => setViewFilter('home')}
-                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === 'home' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === 'home' ? 'bg-[#60A5FA] text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
               >
                 Home
               </Button>
               <Button
                 variant={viewFilter === '1' ? 'default' : 'outline'}
                 onClick={() => setViewFilter('1')}
-                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '1' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '1' ? 'bg-[#60A5FA] text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
               >
                 Phase 1: Overview
               </Button>
               <Button
                 variant={viewFilter === '2' ? 'default' : 'outline'}
                 onClick={() => setViewFilter('2')}
-                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '2' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '2' ? 'bg-[#60A5FA] text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
               >
                 Phase 2: Preparation
               </Button>
               <Button
                 variant={viewFilter === '3' ? 'default' : 'outline'}
                 onClick={() => setViewFilter('3')}
-                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '3' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
+                className={`rounded-full px-5 py-1.5 font-semibold text-base transition-all duration-200 ${viewFilter === '3' ? 'bg-[#60A5FA] text-white shadow-md scale-105' : 'hover:bg-blue-100'}`}
               >
                 Phase 3: Execution
               </Button>
