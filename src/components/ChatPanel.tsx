@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip, Send, X, Bot, User, CheckCircle } from "lucide-react";
-import { sendMessage, initializeChat, resetChat, ChatMessage } from "@/lib/gemini";
+import { sendMessage, sendMessageWithFiles, initializeChat, resetChat, ChatMessage } from "@/lib/gemini";
 import { useProject } from "@/lib/project-context";
 
 interface ChatPanelProps {
@@ -228,10 +228,68 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
           type="file"
           multiple
           className="hidden"
-          onChange={(e) => {
+          onChange={async (e) => {
             if (e.target.files?.length) {
-              console.log("Files selected:", e.target.files);
-              // Handle file upload logic here
+              setIsLoading(true);
+              const prompt = inputValue.trim() || "Please analyze the uploaded document(s).";
+              const userMsg: ChatMessage = {
+                id: Date.now().toString(),
+                type: 'user',
+                content: `Uploaded file${e.target.files.length > 1 ? 's' : ''}: ${Array.from(e.target.files).map(f => f.name).join(', ')}${inputValue ? `\nPrompt: ${inputValue}` : ''}`,
+                timestamp: new Date()
+              };
+              setMessages(prev => [...prev, userMsg]);
+              setInputValue("");
+              try {
+                const result = await sendMessageWithFiles(prompt, e.target.files);
+                const botResponse: ChatMessage = {
+                  id: (Date.now() + 1).toString(),
+                  type: 'bot',
+                  content: result.response,
+                  timestamp: new Date()
+                };
+                setMessages(prev => [...prev, botResponse]);
+                if (result.taskUpdates && result.taskUpdates.length > 0) {
+                  result.taskUpdates.forEach(taskUpdate => {
+                    if (taskUpdate.type === 'branding' && taskUpdate.colors) {
+                      updateTask(taskUpdate.phaseId, taskUpdate.taskId, {
+                        details: taskUpdate.details,
+                        colors: taskUpdate.colors,
+                        source: 'chatbot',
+                        completed: true,
+                        status: 'done'
+                      });
+                    } else {
+                      addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
+                    }
+                  });
+                  result.taskUpdates.forEach((taskUpdate, index) => {
+                    let updateContent = `✅ I've automatically updated your ${taskUpdate.type} task with: "${taskUpdate.details}"`;
+                    if (taskUpdate.type === 'branding' && taskUpdate.colors) {
+                      updateContent = `✅ I've automatically updated your branding with: Primary: ${taskUpdate.colors.primary}, Secondary: ${taskUpdate.colors.secondary}`;
+                    }
+                    const updateMessage: ChatMessage = {
+                      id: (Date.now() + 2 + index).toString(),
+                      type: 'bot',
+                      content: updateContent,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, updateMessage]);
+                  });
+                }
+              } catch (error) {
+                console.error('Error getting response:', error);
+                const errorResponse: ChatMessage = {
+                  id: (Date.now() + 1).toString(),
+                  type: 'bot',
+                  content: "Sorry, I encountered an error processing your file(s). Please try again.",
+                  timestamp: new Date()
+                };
+                setMessages(prev => [...prev, errorResponse]);
+              } finally {
+                setIsLoading(false);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }
             }
           }}
         />

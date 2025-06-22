@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, createUserContent, createPartFromUri } from '@google/genai';
 
 // Initialize the Gemini API
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -388,4 +388,56 @@ export const resetChat = () => {
     }
   ];
   console.log('Chat reset successfully');
+};
+
+export const sendMessageWithFiles = async (
+  message: string,
+  files: FileList
+): Promise<{ response: string; taskUpdates: TaskUpdate[] }> => {
+  if (!API_KEY) {
+    return {
+      response: 'Error: API key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.',
+      taskUpdates: []
+    };
+  }
+
+  try {
+    // Upload all files and collect their metadata
+    const uploadedFiles = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      // Upload file to Gemini
+      const uploaded = await ai.files.upload({
+        file,
+        config: { mimeType: file.type },
+      });
+      uploadedFiles.push(uploaded);
+    }
+
+    // Prepare multimodal prompt: files first, then message
+    const fileParts = uploadedFiles.map(f => createPartFromUri(f.uri, f.mimeType));
+    const contents = createUserContent([
+      ...fileParts,
+      message,
+    ]);
+
+    // Add to conversation history for context
+    conversationHistory.push({ role: 'user', parts: `[FILE UPLOAD] ${message}` });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [contents],
+    });
+
+    const responseText = response.text;
+    conversationHistory.push({ role: 'model', parts: responseText });
+    const taskUpdates = extractFromAIResponse(responseText);
+    return { response: responseText, taskUpdates };
+  } catch (error) {
+    console.error('Error sending multimodal message to Gemini:', error);
+    return {
+      response: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
+      taskUpdates: []
+    };
+  }
 }; 
