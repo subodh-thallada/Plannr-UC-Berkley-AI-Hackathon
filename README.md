@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# Welcome to your the project
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/8b78dba3-32ed-423f-a550-9486cc142d02
+**URL**: https://ai-assist-planner.vercel.app/
 
 ## Setup
 
