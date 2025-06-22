@@ -1,64 +1,48 @@
-import { useState } from "react";
-import { ChatPanel } from "@/components/ChatPanel";
-import { ProjectPanel } from "@/components/ProjectPanel";
-import { ProjectProvider } from "@/lib/project-context";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import React from "react";
 
-const Index = () => {
-  const [isChatOpen, setIsChatOpen] = useState(false);
-
+export default function HackathonWebsite() {
   return (
-    <ProjectProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-white">
-        {/* Mobile Chat Toggle */}
-        <div className="lg:hidden fixed top-4 left-4 z-50">
-          <button
-            onClick={() => setIsChatOpen(!isChatOpen)}
-            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex min-h-screen">
-          {/* Desktop: Resizable Panels */}
-          <div className="hidden lg:flex w-full">
-            <ResizablePanelGroup direction="horizontal" className="w-full h-screen">
-              <ResizablePanel defaultSize={30} minSize={20} maxSize={50} className="h-full">
-                <ChatPanel />
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={70} minSize={50} className="h-full">
-                <ProjectPanel />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </div>
-
-          {/* Mobile: Modal ChatPanel */}
-          <div className={`${
-            isChatOpen ? 'fixed inset-0 z-40' : 'hidden'
-          } lg:hidden`}>
-            <ChatPanel onClose={() => setIsChatOpen(false)} />
-          </div>
-
-          {/* Overlay for mobile */}
-          {isChatOpen && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-              onClick={() => setIsChatOpen(false)}
-            />
-          )}
-
-          {/* Mobile: ProjectPanel always visible */}
-          <div className="flex-1 lg:hidden">
-            <ProjectPanel />
-          </div>
-        </div>
-      </div>
-    </ProjectProvider>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f2027 0%, #2c5364 100%)", color: "#fff", fontFamily: "'Inter', sans-serif" }}>
+      <header style={{ padding: "2rem 0", textAlign: "center", borderBottom: "1px solid #1a2636", background: "rgba(0,0,0,0.7)" }}>
+        <h1 style={{ fontSize: "3rem", fontWeight: 900, letterSpacing: "-2px", color: "#4fc3f7", textShadow: "0 2px 16px #0ff" }}>
+          Gen AI Hackathon 2024
+        </h1>
+        <p style={{ fontSize: "1.5rem", color: "#b3e5fc", marginTop: "1rem" }}>
+          October 17-18, Madison Square Garden, NYC
+        </p>
+        <p style={{ fontSize: "1.1rem", color: "#90caf9", marginTop: "0.5rem" }}>
+          ~400 participants | Theme: <span style={{ color: "#fff" }}>Generative AI</span>
+        </p>
+      </header>
+      <main style={{ maxWidth: 700, margin: "3rem auto", background: "rgba(20,30,50,0.85)", borderRadius: 24, boxShadow: "0 8px 32px #000a", padding: "2.5rem 2rem" }}>
+        <section style={{ marginBottom: "2.5rem" }}>
+          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#4fc3f7", marginBottom: 12 }}>About the Hackathon</h2>
+          <p style={{ fontSize: "1.15rem", color: "#e3f2fd" }}>
+            Join us for an electrifying 36-hour hackathon at the iconic Madison Square Garden! Dive into the world of Generative AI, collaborate with top talent, and build the next wave of AI-powered applications. Whether you're a coder, designer, or AI enthusiast, this is your chance to innovate, learn, and connect.
+          </p>
+        </section>
+        <section style={{ marginBottom: "2.5rem" }}>
+          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#4fc3f7", marginBottom: 12 }}>Event Details</h2>
+          <ul style={{ fontSize: "1.1rem", color: "#b3e5fc", lineHeight: 2, listStyle: "none", padding: 0 }}>
+            <li><strong>Date:</strong> October 17-18, 2024</li>
+            <li><strong>Location:</strong> Madison Square Garden, New York City</li>
+            <li><strong>Participants:</strong> ~400</li>
+            <li><strong>Theme:</strong> Generative AI</li>
+            <li><strong>Prizes:</strong> $20,000+ in cash & swag</li>
+            <li><strong>Workshops:</strong> AI, ML, and more</li>
+            <li><strong>Free food, swag, and 24/7 venue access</strong></li>
+          </ul>
+        </section>
+        <section>
+          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#4fc3f7", marginBottom: 12 }}>Register Now</h2>
+          <a href="#" style={{ display: "inline-block", background: "linear-gradient(90deg, #1565c0, #00bcd4)", color: "#fff", fontWeight: 700, fontSize: "1.2rem", padding: "0.9rem 2.5rem", borderRadius: 999, boxShadow: "0 2px 16px #00bcd4aa", textDecoration: "none", marginTop: 8, letterSpacing: 1 }}>
+            Registration Coming Soon
+          </a>
+        </section>
+      </main>
+      <footer style={{ textAlign: "center", color: "#b3e5fc", padding: "2rem 0 1rem 0", fontSize: "1rem" }}>
+        &copy; 2024 Gen AI Hackathon. All rights reserved.
+      </footer>
+    </div>
   );
-};
-
-export default Index;
+}

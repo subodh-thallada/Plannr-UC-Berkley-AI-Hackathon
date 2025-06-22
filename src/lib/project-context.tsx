@@ -8,6 +8,8 @@ interface Task {
   details?: string; // Add details field to store timeline/location info
   source?: 'chatbot' | 'manual'; // Track the source of the details
   colors?: { primary: string; secondary: string }; // Add colors for branding
+  subtasks?: { id: string; name: string; completed: boolean; status: 'pending' | 'in-progress' | 'done' }[];
+  phase?: any;
 }
 
 interface Phase {
@@ -62,7 +64,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
       isOpen: false,
       tasks: [
         { id: '2-1', name: 'Make website', completed: false, status: 'pending' },
-        { id: '2-2', name: 'Make marketing posts and images', completed: false, status: 'pending' },
+        { id: '2-2', name: 'Make marketing posts', completed: false, status: 'pending' },
         { id: '2-3', name: 'Make sponsorship package', completed: false, status: 'pending' },
         { id: '2-4', name: 'Book Venue', completed: false, status: 'pending' },
         { id: '2-5', name: 'Plan Meals', completed: false, status: 'pending' },

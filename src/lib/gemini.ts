@@ -440,4 +440,48 @@ export const sendMessageWithFiles = async (
       taskUpdates: []
     };
   }
-}; 
+};
+
+export async function generateMarketingImages({ prompt, n }: { prompt: string; n: number }): Promise<{ url: string }[]> {
+  // Use Gemini API for image generation
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=' + apiKey;
+
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { text: prompt }
+        ]
+      }
+    ]
+  };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to generate image');
+  }
+
+  const data = await response.json();
+  // Assume the API returns an array of image URLs in data.images
+  // If the API returns a different structure, adjust accordingly
+  if (data && data.images && Array.isArray(data.images)) {
+    return data.images.slice(0, n).map((url: string) => ({ url }));
+  }
+  // Fallback: try to extract from candidates/parts if that's the structure
+  if (data && data.candidates && data.candidates[0]?.content?.parts) {
+    const urls = data.candidates[0].content.parts
+      .filter((p: any) => p.inline_data && p.inline_data.mime_type && p.inline_data.mime_type.startsWith('image/'))
+      .map((p: any) => `data:${p.inline_data.mime_type};base64,${p.inline_data.data}`);
+    return urls.slice(0, n).map((url: string) => ({ url }));
+  }
+  throw new Error('No images returned from Gemini API');
+} 

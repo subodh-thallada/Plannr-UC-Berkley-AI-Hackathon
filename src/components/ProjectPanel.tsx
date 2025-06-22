@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Settings, Info, Edit2, Save, X, Bot, User, Trash2, Phone } from "lucide-react";
+import { ChevronDown, ChevronRight, Settings, Info, Edit2, Save, X, Bot, User, Trash2, Phone, Check, Image as LucideImage } from "lucide-react";
 import { useProject } from "@/lib/project-context";
 import { callVenue, getCurrentCallStatus, endCall, CallStatus, callRestaurant } from "@/lib/vapi-service";
 import { saveTaskUpdate, clearPhase1TaskUpdates } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { generateMarketingImages } from "@/lib/gemini";
 
 export const ProjectPanel = () => {
-  const [viewType, setViewType] = useState<'timeline' | 'category'>('timeline');
+  const [viewType, setViewType] = useState<string>('timeline');
   const [viewFilter, setViewFilter] = useState<'home' | '1' | '2' | '3' | 'logistics' | 'marketing' | 'website' | 'outreach'>('home');
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -21,6 +23,10 @@ export const ProjectPanel = () => {
   const [callStatus, setCallStatus] = useState<CallStatus>({ id: '', status: 'idle' });
   const { phases, togglePhase, toggleTask, updateTask } = useProject();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [generatingWebsite, setGeneratingWebsite] = useState(false);
+  const [generatingImages, setGeneratingImages] = useState(false);
+  const [marketingImages, setMarketingImages] = useState<{ url: string }[]>([]);
 
   // Task to category mapping
   const taskCategoryMap: Record<string, 'logistics' | 'marketing' | 'website' | 'outreach'> = {
@@ -33,7 +39,7 @@ export const ProjectPanel = () => {
     // Phase 2
     '2-1': 'website',   // Make website
     '2-2': 'marketing', // Make marketing posts and images
-    '2-3': 'marketing', // Make sponsorship package
+    '2-3': 'marketing', // Get sponsors
     '2-4': 'logistics', // Book Venue
     '2-5': 'logistics', // Plan Meals
     // Phase 3
@@ -53,6 +59,22 @@ export const ProjectPanel = () => {
     phase.tasks.forEach(task => {
       const cat = taskCategoryMap[task.id];
       if (cat) categoryTasks[cat].push({ ...task, phase });
+    });
+  });
+
+  // Add default subtasks for 'Get sponsors' task
+  phases.forEach(phase => {
+    phase.tasks.forEach(task => {
+      if (task.name === 'Make sponsorship package') {
+        task.name = 'Get sponsors';
+        if (!task.subtasks) {
+          task.subtasks = [
+            { id: 'sub-1', name: 'get contacts', completed: false, status: 'pending' },
+            { id: 'sub-2', name: 'send emails', completed: false, status: 'pending' },
+            { id: 'sub-3', name: 'confirmed/finalized', completed: false, status: 'pending' },
+          ];
+        }
+      }
     });
   });
 
@@ -512,6 +534,56 @@ export const ProjectPanel = () => {
                                     className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 scale-125 shadow-sm"
                                   />
                                   <div className="flex-1">
+                                    <div className="flex items-center justify-between w-full">
+                                      {task.name === 'Get sponsors' ? (
+                                        <div className="flex items-center gap-4 w-full">
+                                          <span className="font-semibold text-lg transition-all duration-200" style={{ minWidth: 0 }}>{task.name}</span>
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-base text-gray-900">Run Automation</span>
+                                            <Button
+                                              variant="outline"
+                                              size="icon"
+                                              className="rounded-full h-8 w-8 flex items-center justify-center bg-gradient-to-r from-blue-500 to-green-400 text-white border-none shadow hover:scale-105"
+                                              onClick={() => { /* Placeholder for automation logic */ }}
+                                              aria-label="Run automation"
+                                            >
+                                              <ChevronRight className="w-5 h-5" />
+                                            </Button>
+                                          </div>
+                                          <div className="flex flex-col ml-2 mt-0 relative">
+                                            {(task.subtasks || []).map((subtask, idx, arr) => (
+                                              <div key={subtask.id} className="flex items-center relative min-h-[40px]">
+                                                {idx < arr.length - 1 && (
+                                                  <div className="absolute left-4 top-6 w-0.5 h-8 bg-gray-300 z-0" />
+                                                )}
+                                                <button
+                                                  className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors duration-200 ${
+                                                    subtask.completed
+                                                      ? 'bg-gradient-to-br from-green-400 to-blue-400 border-blue-400 text-white'
+                                                      : 'bg-white border-gray-300 text-gray-400'
+                                                  }`}
+                                                  style={{ marginRight: '0.5rem' }}
+                                                  onClick={() => {
+                                                    updateTask(task.phase.id, task.id, {
+                                                      subtasks: task.subtasks?.map(st => st.id === subtask.id ? { ...st, completed: !st.completed, status: !st.completed ? 'done' : 'pending' } : st)
+                                                    });
+                                                    const allDone = task.subtasks?.every(st => st.id === subtask.id ? !st.completed : st.completed);
+                                                    if (allDone) {
+                                                      updateTask(task.phase.id, task.id, { completed: true, status: 'done' });
+                                                    } else {
+                                                      updateTask(task.phase.id, task.id, { completed: false, status: 'pending' });
+                                                    }
+                                                  }}
+                                                  aria-label={`Toggle ${subtask.name}`}
+                                                >
+                                                  {subtask.completed ? <Check className="w-5 h-5" /> : <span className="w-3 h-3 rounded-full border-2 border-gray-300" />}
+                                                </button>
+                                                <span className={`ml-2 text-base ${subtask.completed ? 'text-green-700 font-semibold' : 'text-gray-900'}`}>{subtask.name}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ) : (
                                     <span
                                       className={`font-semibold text-lg transition-all duration-200 ${
                                         task.completed ? 'text-gray-400 line-through' : 'text-gray-900'
@@ -519,6 +591,8 @@ export const ProjectPanel = () => {
                                     >
                                       {task.name}
                                     </span>
+                                      )}
+                                    </div>
                                     {editingTask === task.id ? (
                                       <div className="mt-2 flex items-center space-x-3 animate-fade-in">
                                         <Info className="w-4 h-4 text-blue-600" />
@@ -697,12 +771,49 @@ export const ProjectPanel = () => {
                                 </div>
 
                                 <div className="flex items-center space-x-3">
+                                  {(viewType === 'timeline') && task.name === 'Make website' ? (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 px-3 text-xs bg-gradient-to-r from-green-400 to-blue-400 text-white border-none shadow rounded-full hover:scale-105"
+                                        onClick={async () => {
+                                          if (!task.completed && !generatingWebsite) {
+                                            setGeneratingWebsite(true);
+                                            await new Promise(res => setTimeout(res, 3000));
+                                            toggleTask(phase.id, task.id);
+                                            setGeneratingWebsite(false);
+                                            navigate('/hackathon');
+                                          } else if (!generatingWebsite) {
+                                            navigate('/hackathon');
+                                          }
+                                        }}
+                                        disabled={generatingWebsite}
+                                      >
+                                        {generatingWebsite ? (
+                                          <span className="flex items-center gap-2">
+                                            <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                            Generating...
+                                          </span>
+                                        ) : (
+                                          'Make Website'
+                                        )}
+                                      </Button>
                                   <Badge
                                     variant="outline"
                                     className={`text-xs rounded-full px-3 py-1 font-bold shadow-sm border-2 ${getStatusColor(task.status)}`}
                                   >
                                     {getStatusLabel(task.status)}
                                   </Badge>
+                                    </>
+                                  ) : (
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-xs rounded-full px-3 py-1 font-bold shadow-sm border-2 ${getStatusColor(task.status)}`}
+                                    >
+                                      {getStatusLabel(task.status)}
+                                    </Badge>
+                                  )}
                                   {/* Call Venue Button for Book Venue task */}
                                   {task.name === 'Book Venue' && (
                                     <div className="flex items-center space-x-1">
@@ -807,6 +918,49 @@ export const ProjectPanel = () => {
                                       )}
                                     </div>
                                   )}
+                                  {/* Marketing image generation button for Make marketing posts */}
+                                  {task.name === 'Make marketing posts' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-blue-400 to-black text-white border-none shadow rounded-full hover:scale-105"
+                                      onClick={async () => {
+                                        setGeneratingImages(true);
+                                        setMarketingImages([]);
+                                        try {
+                                          const images = await generateMarketingImages({
+                                            prompt: 'A blue and black themed poster for a Gen AI hackathon at Madison Square Garden, October 17-18, 2024, for 400 people max. Include all these details on the poster.',
+                                            n: 1
+                                          });
+                                          setMarketingImages(images);
+                                        } catch (e) {
+                                          setMarketingImages([]);
+                                        }
+                                        setGeneratingImages(false);
+                                      }}
+                                      disabled={generatingImages}
+                                    >
+                                      {generatingImages ? (
+                                        <span className="flex items-center gap-2">
+                                          <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                            Generating...
+                                        </span>
+                                      ) : (
+                                        <span className="flex items-center gap-1"><LucideImage className="w-4 h-4 mr-1" /> Generate Images</span>
+                                      )}
+                                    </Button>
+                                  )}
+                                  {/* Display generated marketing images below the task */}
+                                  {task.name === 'Make marketing posts' && marketingImages.length > 0 && (
+                                    <div className="flex flex-wrap gap-4 mt-4">
+                                      {marketingImages.slice(0, 1).map((img, idx) => (
+                                        <div key={idx} className="flex flex-col items-center">
+                                          <img src={img.url} alt="Marketing Poster" className="w-48 h-64 object-cover rounded-lg shadow-lg border border-blue-200" />
+                                          <a href={img.url} download={`marketing-poster-${idx + 1}.png`} className="mt-2 text-xs text-blue-600 underline">Download</a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -857,9 +1011,65 @@ export const ProjectPanel = () => {
                                 className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 scale-125 shadow-sm"
                               />
                               <div className="flex-1">
-                                <span className={`font-semibold text-lg transition-all duration-200 ${task.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.name}</span>
-                                <span className="ml-2 text-xs text-gray-400">({task.phase.name})</span>
-                                {/* --- Details, editing, branding, etc. --- */}
+                                <div className="flex items-center justify-between w-full">
+                                  {task.name === 'Get sponsors' ? (
+                                    <div className="flex items-center gap-4 w-full">
+                                      <span className="font-semibold text-lg transition-all duration-200" style={{ minWidth: 0 }}>{task.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-base text-gray-900">Run Automation</span>
+                                        <Button
+                                          variant="outline"
+                                          size="icon"
+                                          className="rounded-full h-8 w-8 flex items-center justify-center bg-gradient-to-r from-blue-500 to-green-400 text-white border-none shadow hover:scale-105"
+                                          onClick={() => { /* Placeholder for automation logic */ }}
+                                          aria-label="Run automation"
+                                        >
+                                          <ChevronRight className="w-5 h-5" />
+                                        </Button>
+                                      </div>
+                                      <div className="flex flex-col ml-2 mt-0 relative">
+                                        {(task.subtasks || []).map((subtask, idx, arr) => (
+                                          <div key={subtask.id} className="flex items-center relative min-h-[40px]">
+                                            {idx < arr.length - 1 && (
+                                              <div className="absolute left-4 top-6 w-0.5 h-8 bg-gray-300 z-0" />
+                                            )}
+                                            <button
+                                              className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors duration-200 ${
+                                                subtask.completed
+                                                  ? 'bg-gradient-to-br from-green-400 to-blue-400 border-blue-400 text-white'
+                                                  : 'bg-white border-gray-300 text-gray-400'
+                                              }`}
+                                              style={{ marginRight: '0.5rem' }}
+                                              onClick={() => {
+                                                updateTask(task.phase.id, task.id, {
+                                                  subtasks: task.subtasks?.map(st => st.id === subtask.id ? { ...st, completed: !st.completed, status: !st.completed ? 'done' : 'pending' } : st)
+                                                });
+                                                const allDone = task.subtasks?.every(st => st.id === subtask.id ? !st.completed : st.completed);
+                                                if (allDone) {
+                                                  updateTask(task.phase.id, task.id, { completed: true, status: 'done' });
+                                                } else {
+                                                  updateTask(task.phase.id, task.id, { completed: false, status: 'pending' });
+                                                }
+                                              }}
+                                              aria-label={`Toggle ${subtask.name}`}
+                                            >
+                                              {subtask.completed ? <Check className="w-5 h-5" /> : <span className="w-3 h-3 rounded-full border-2 border-gray-300" />}
+                                            </button>
+                                            <span className={`ml-2 text-base ${subtask.completed ? 'text-green-700 font-semibold' : 'text-gray-900'}`}>{subtask.name}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span
+                                      className={`font-semibold text-lg transition-all duration-200 ${
+                                        task.completed ? 'text-gray-400 line-through' : 'text-gray-900'
+                                      }`}
+                                    >
+                                      {task.name}
+                                    </span>
+                                  )}
+                                </div>
                                 {editingTask === task.id ? (
                                   <div className="mt-2 flex items-center space-x-3 animate-fade-in">
                                     <Info className="w-4 h-4 text-blue-600" />
@@ -1037,12 +1247,49 @@ export const ProjectPanel = () => {
                               </div>
                             </div>
                             <div className="flex items-center space-x-3">
+                              {(viewType === 'timeline') && task.name === 'Make website' ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 px-3 text-xs bg-gradient-to-r from-green-400 to-blue-400 text-white border-none shadow rounded-full hover:scale-105"
+                                    onClick={async () => {
+                                      if (!task.completed && !generatingWebsite) {
+                                        setGeneratingWebsite(true);
+                                        await new Promise(res => setTimeout(res, 3000));
+                                        toggleTask(task.phase.id, task.id);
+                                        setGeneratingWebsite(false);
+                                        navigate('/hackathon');
+                                      } else if (!generatingWebsite) {
+                                        navigate('/hackathon');
+                                      }
+                                    }}
+                                    disabled={generatingWebsite}
+                                  >
+                                    {generatingWebsite ? (
+                                      <span className="flex items-center gap-2">
+                                        <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                          Generating...
+                                      </span>
+                                    ) : (
+                                      'Make Website'
+                                    )}
+                                  </Button>
                               <Badge
                                 variant="outline"
                                 className={`text-xs rounded-full px-3 py-1 font-bold shadow-sm border-2 ${getStatusColor(task.status)}`}
                               >
                                 {getStatusLabel(task.status)}
                               </Badge>
+                                </>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs rounded-full px-3 py-1 font-bold shadow-sm border-2 ${getStatusColor(task.status)}`}
+                                >
+                                  {getStatusLabel(task.status)}
+                                </Badge>
+                              )}
                               {/* Call Venue Button for Book Venue task */}
                               {task.name === 'Book Venue' && (
                                 <div className="flex items-center space-x-1">
@@ -1145,6 +1392,49 @@ export const ProjectPanel = () => {
                                       Retry
                                     </Button>
                                   )}
+                                </div>
+                              )}
+                              {/* Marketing image generation button for Make marketing posts */}
+                              {task.name === 'Make marketing posts' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-3 text-xs bg-gradient-to-r from-blue-400 to-black text-white border-none shadow rounded-full hover:scale-105"
+                                  onClick={async () => {
+                                    setGeneratingImages(true);
+                                    setMarketingImages([]);
+                                    try {
+                                      const images = await generateMarketingImages({
+                                        prompt: 'A blue and black themed poster for a Gen AI hackathon at Madison Square Garden, October 17-18, 2024, for 400 people max. Include all these details on the poster.',
+                                        n: 1
+                                      });
+                                      setMarketingImages(images);
+                                    } catch (e) {
+                                      setMarketingImages([]);
+                                    }
+                                    setGeneratingImages(false);
+                                  }}
+                                  disabled={generatingImages}
+                                >
+                                  {generatingImages ? (
+                                    <span className="flex items-center gap-2">
+                                      <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                          Generating...
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1"><LucideImage className="w-4 h-4 mr-1" /> Generate Images</span>
+                                  )}
+                                </Button>
+                              )}
+                              {/* Display generated marketing images below the task */}
+                              {task.name === 'Make marketing posts' && marketingImages.length > 0 && (
+                                <div className="flex flex-wrap gap-4 mt-4">
+                                  {marketingImages.slice(0, 1).map((img, idx) => (
+                                    <div key={idx} className="flex flex-col items-center">
+                                      <img src={img.url} alt="Marketing Poster" className="w-48 h-64 object-cover rounded-lg shadow-lg border border-blue-200" />
+                                      <a href={img.url} download={`marketing-poster-${idx + 1}.png`} className="mt-2 text-xs text-blue-600 underline">Download</a>
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                               <Button
