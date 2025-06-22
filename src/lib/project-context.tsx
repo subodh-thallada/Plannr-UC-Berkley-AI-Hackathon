@@ -7,6 +7,7 @@ interface Task {
   status: 'pending' | 'in-progress' | 'done';
   details?: string; // Add details field to store timeline/location info
   source?: 'chatbot' | 'manual'; // Track the source of the details
+  colors?: { primary: string; secondary: string }; // Add colors for branding
 }
 
 interface Phase {
@@ -43,7 +44,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   const [phases, setPhases] = useState<Phase[]>([
     {
       id: '1',
-      name: 'Phase 1: Planning',
+      name: 'Phase 1: Overview',
       icon: '📂',
       isOpen: true,
       tasks: [
@@ -51,6 +52,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
         { id: '1-2', name: 'Theme', completed: false, status: 'pending' },
         { id: '1-3', name: 'Location', completed: false, status: 'pending' },
         { id: '1-4', name: 'Size', completed: false, status: 'pending' },
+        { id: '1-5', name: 'Branding', completed: false, status: 'pending' },
       ]
     },
     {

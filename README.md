@@ -102,6 +102,12 @@ This project includes advanced task editing capabilities that allow you to:
 - Tasks without details show an "Add details" button
 - Click to start editing and add information manually
 
+### Branding Colors
+- **Color Selection**: Choose primary and secondary colors for your project theme
+- **Visual Preview**: See color swatches and hex codes
+- **AI Integration**: Chatbot can detect and set colors from hex codes
+- **Manual Editing**: Use color pickers to customize your brand colors
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!

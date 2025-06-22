@@ -13,7 +13,7 @@ interface ChatPanelProps {
 }
 
 export const ChatPanel = ({ onClose }: ChatPanelProps) => {
-  const { addTaskDetails } = useProject();
+  const { addTaskDetails, updateTask } = useProject();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -61,15 +61,34 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
       if (result.taskUpdates && result.taskUpdates.length > 0) {
         // Apply all task updates
         result.taskUpdates.forEach(taskUpdate => {
-          addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
+          if (taskUpdate.type === 'branding' && taskUpdate.colors) {
+            // Handle branding with colors
+            updateTask(taskUpdate.phaseId, taskUpdate.taskId, {
+              details: taskUpdate.details,
+              colors: taskUpdate.colors,
+              source: 'chatbot',
+              completed: true,
+              status: 'done'
+            });
+          } else {
+            // Handle regular task updates
+            addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
+          }
         });
         
         // Add confirmation messages for each update
         result.taskUpdates.forEach((taskUpdate, index) => {
+          let updateContent = `✅ I've automatically updated your ${taskUpdate.type} task with: "${taskUpdate.details}"`;
+          
+          // Add color preview for branding updates
+          if (taskUpdate.type === 'branding' && taskUpdate.colors) {
+            updateContent = `✅ I've automatically updated your branding with: Primary: ${taskUpdate.colors.primary}, Secondary: ${taskUpdate.colors.secondary}`;
+          }
+          
           const updateMessage: ChatMessage = {
             id: (Date.now() + 2 + index).toString(),
             type: 'bot',
-            content: `✅ I've automatically updated your ${taskUpdate.type} task with: "${taskUpdate.details}"`,
+            content: updateContent,
             timestamp: new Date()
           };
           

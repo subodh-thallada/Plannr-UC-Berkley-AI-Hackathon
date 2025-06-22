@@ -17,10 +17,11 @@ export interface ChatMessage {
 }
 
 export interface TaskUpdate {
-  type: 'timeline' | 'location' | 'theme' | 'size' | 'none';
+  type: 'timeline' | 'location' | 'theme' | 'size' | 'branding' | 'none';
   details: string;
   taskId: string;
   phaseId: string;
+  colors?: { primary: string; secondary: string };
 }
 
 // Store conversation history
@@ -129,6 +130,40 @@ export const extractMultipleTaskUpdates = (message: string): TaskUpdate[] => {
     }
   }
   
+  // Branding/color detection - natural language patterns
+  if (lowerMessage.includes('branding') || lowerMessage.includes('colors') || lowerMessage.includes('colour') || 
+      lowerMessage.includes('color scheme') || lowerMessage.includes('theme colors') || lowerMessage.includes('brand colors')) {
+    
+    // Look for hex color codes
+    const hexColorPattern = /#[0-9A-Fa-f]{6}/g;
+    const hexColors = message.match(hexColorPattern);
+    
+    if (hexColors && hexColors.length >= 2) {
+      updates.push({
+        type: 'branding',
+        details: `Primary: ${hexColors[0]}, Secondary: ${hexColors[1]}`,
+        taskId: '1-5',
+        phaseId: '1',
+        colors: {
+          primary: hexColors[0],
+          secondary: hexColors[1]
+        }
+      });
+    } else if (hexColors && hexColors.length === 1) {
+      // If only one color is provided, use a default secondary
+      updates.push({
+        type: 'branding',
+        details: `Primary: ${hexColors[0]}, Secondary: #10B981`,
+        taskId: '1-5',
+        phaseId: '1',
+        colors: {
+          primary: hexColors[0],
+          secondary: '#10B981'
+        }
+      });
+    }
+  }
+  
   return updates;
 };
 
@@ -222,6 +257,48 @@ export const extractFromAIResponse = (response: string): TaskUpdate[] => {
         taskId: '1-4',
         phaseId: '1'
       });
+      break;
+    }
+  }
+  
+  // Branding extraction from AI response
+  const brandingPatterns = [
+    /\*\*Branding:\*\*\s*([^*\n]+)/i,
+    /\*\*Branding\*\*:\s*([^*\n]+)/i,
+    /Branding:\s*([^*\n]+)/i,
+    /Branding\s*:\s*([^*\n]+)/i,
+  ];
+  
+  for (const pattern of brandingPatterns) {
+    const match = response.match(pattern);
+    if (match) {
+      // Look for hex colors in the branding details
+      const hexColorPattern = /#[0-9A-Fa-f]{6}/g;
+      const hexColors = match[1].match(hexColorPattern);
+      
+      if (hexColors && hexColors.length >= 2) {
+        updates.push({
+          type: 'branding',
+          details: match[1].trim(),
+          taskId: '1-5',
+          phaseId: '1',
+          colors: {
+            primary: hexColors[0],
+            secondary: hexColors[1]
+          }
+        });
+      } else if (hexColors && hexColors.length === 1) {
+        updates.push({
+          type: 'branding',
+          details: match[1].trim(),
+          taskId: '1-5',
+          phaseId: '1',
+          colors: {
+            primary: hexColors[0],
+            secondary: '#10B981'
+          }
+        });
+      }
       break;
     }
   }
