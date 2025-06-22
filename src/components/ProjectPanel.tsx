@@ -200,79 +200,83 @@ export const ProjectPanel = () => {
     : phases.filter(p => p.id === viewFilter);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Top Navigation Bar */}
-      <div className="flex items-center gap-2 p-4 border-b border-blue-100 bg-white/70 backdrop-blur-sm">
+      <div className="flex items-center gap-2 p-4 border-b border-blue-100 bg-white/70 backdrop-blur-xl shadow-lg rounded-b-2xl">
         <Button
           variant={viewFilter === 'home' ? 'default' : 'outline'}
           onClick={() => setViewFilter('home')}
+          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === 'home' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
         >
           Home
         </Button>
         <Button
           variant={viewFilter === '1' ? 'default' : 'outline'}
           onClick={() => setViewFilter('1')}
+          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === '1' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
         >
           Phase 1: Overview
         </Button>
         <Button
           variant={viewFilter === '2' ? 'default' : 'outline'}
           onClick={() => setViewFilter('2')}
+          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === '2' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
         >
           Phase 2: Preparation
         </Button>
         <Button
           variant={viewFilter === '3' ? 'default' : 'outline'}
           onClick={() => setViewFilter('3')}
+          className={`rounded-full px-5 py-2 font-semibold transition-all duration-200 ${viewFilter === '3' ? 'bg-gradient-to-r from-blue-500 to-green-400 text-white shadow-md' : 'hover:bg-blue-100'}`}
         >
           Phase 3: Execution
         </Button>
       </div>
 
       {/* Header */}
-      <div className="p-6 bg-white/70 backdrop-blur-sm border-b border-blue-100">
+      <div className="p-8 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl">
         <div className="flex items-center justify-between">
           <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h1>
-        <p className="text-gray-600">Manage your project phases and tasks with AI assistance</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight drop-shadow-sm">Project Management</h1>
+        <p className="text-lg text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
           </div>
         </div>
       </div>
 
       {/* Project Phases */}
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-4">
+        <div className="p-8 space-y-8">
           {filteredPhases.map((phase) => {
             const progress = getPhaseProgress(phase);
             return (
-              <Card key={phase.id} className="bg-white/60 backdrop-blur-sm border border-blue-100 shadow-sm">
+              <Card key={phase.id} className="bg-white/70 backdrop-blur-2xl border border-blue-100 shadow-2xl rounded-3xl transition-transform duration-200 hover:scale-[1.01]">
                 <Collapsible open={phase.isOpen} onOpenChange={() => togglePhase(phase.id)}>
                   <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-4 hover:bg-blue-50/50 transition-colors rounded-t-lg">
-                      <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-between p-6 hover:bg-gradient-to-r hover:from-blue-50/70 hover:to-green-50/70 transition-colors rounded-t-3xl">
+                      <div className="flex items-center space-x-4">
                         {phase.isOpen ? (
-                          <ChevronDown className="w-5 h-5 text-blue-600" />
+                          <ChevronDown className="w-6 h-6 text-blue-600" />
                         ) : (
-                          <ChevronRight className="w-5 h-5 text-blue-600" />
+                          <ChevronRight className="w-6 h-6 text-blue-600" />
                         )}
-                        <span className="text-lg">{phase.icon}</span>
+                        <span className="text-2xl drop-shadow font-bold">{phase.icon}</span>
                         <div className="text-left">
-                          <h3 className="font-semibold text-gray-900">{phase.name}</h3>
-                          <p className="text-sm text-gray-500">
+                          <h3 className="font-bold text-gray-900 text-lg tracking-tight">{phase.name}</h3>
+                          <p className="text-sm text-gray-500 font-medium">
                             {progress.completed}/{progress.total} tasks completed
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
                           <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            className="bg-gradient-to-r from-blue-500 via-green-400 to-green-300 h-3 rounded-full transition-all duration-500 animate-pulse"
                             style={{
                               width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%`
                             }}
                           />
                         </div>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-base text-gray-500 font-semibold">
                           {progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0}%
                         </span>
                       </div>
@@ -280,43 +284,43 @@ export const ProjectPanel = () => {
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    <div className="px-4 pb-4 border-t border-blue-100">
-                      <div className="space-y-3 mt-4">
+                    <div className="px-6 pb-6 border-t border-blue-100">
+                      <div className="space-y-4 mt-6">
                         {phase.tasks.map((task) => (
                           <div
                             key={task.id}
-                            className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
+                            className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 shadow-md group ${
                               task.completed
-                                ? 'bg-green-50/50 border-green-200'
-                                : 'bg-white/80 border-gray-200 hover:border-blue-300'
+                                ? 'bg-gradient-to-r from-green-50/80 to-green-100/80 border-green-200'
+                                : 'bg-white/90 border-gray-200 hover:border-blue-300 hover:shadow-lg'
                             }`}
                           >
-                            <div className="flex items-center space-x-3 flex-1">
+                            <div className="flex items-center space-x-4 flex-1">
                               <Checkbox
                                 checked={task.completed}
                                 onCheckedChange={() => toggleTask(phase.id, task.id)}
-                                className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 scale-125 shadow-sm"
                               />
                               <div className="flex-1">
                                 <span
-                                  className={`font-medium ${
-                                    task.completed ? 'text-gray-500 line-through' : 'text-gray-900'
+                                  className={`font-semibold text-lg transition-all duration-200 ${
+                                    task.completed ? 'text-gray-400 line-through' : 'text-gray-900'
                                   }`}
                                 >
                                   {task.name}
                                 </span>
                                 {editingTask === task.id ? (
-                                  <div className="mt-1 flex items-center space-x-2">
-                                    <Info className="w-3 h-3 text-blue-600" />
+                                  <div className="mt-2 flex items-center space-x-3 animate-fade-in">
+                                    <Info className="w-4 h-4 text-blue-600" />
                                     {task.name === 'Branding' ? (
-                                      <div className="flex items-center space-x-2 flex-1">
+                                      <div className="flex items-center space-x-3 flex-1">
                                         <div className="flex items-center space-x-2">
                                           <label className="text-xs text-gray-600">Primary:</label>
                                           <input
                                             type="color"
                                             value={editingColors.primary}
                                             onChange={(e) => setEditingColors(prev => ({ ...prev, primary: e.target.value }))}
-                                            className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                                            className="w-8 h-8 border border-gray-300 rounded-full cursor-pointer shadow"
                                           />
                                           <span className="text-xs font-mono">{editingColors.primary}</span>
                                         </div>
@@ -326,32 +330,32 @@ export const ProjectPanel = () => {
                                             type="color"
                                             value={editingColors.secondary}
                                             onChange={(e) => setEditingColors(prev => ({ ...prev, secondary: e.target.value }))}
-                                            className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                                            className="w-8 h-8 border border-gray-300 rounded-full cursor-pointer shadow"
                                           />
                                           <span className="text-xs font-mono">{editingColors.secondary}</span>
                                         </div>
                                         <Button
                                           size="sm"
                                           onClick={() => handleSaveColors(phase.id, task.id)}
-                                          className="h-6 px-2 bg-green-600 hover:bg-green-700"
+                                          className="h-8 px-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow hover:scale-105"
                                         >
-                                          <Save className="w-3 h-3" />
+                                          <Save className="w-4 h-4" />
                                         </Button>
                                         <Button
                                           size="sm"
                                           variant="outline"
                                           onClick={handleCancelEdit}
-                                          className="h-6 px-2"
+                                          className="h-8 px-3 rounded-full shadow"
                                         >
-                                          <X className="w-3 h-3" />
+                                          <X className="w-4 h-4" />
                                         </Button>
                                       </div>
                                     ) : (
-                                      <div className="flex items-center space-x-2 flex-1">
+                                      <div className="flex items-center space-x-3 flex-1">
                                         <Input
                                           value={editValue}
                                           onChange={(e) => setEditValue(e.target.value)}
-                                          className="text-xs border-blue-200 focus:border-blue-400"
+                                          className="text-sm border-blue-200 focus:border-blue-400 rounded-full px-4 py-2 shadow"
                                           placeholder={getTaskPlaceholder(task.name)}
                                           onKeyPress={(e) => {
                                             if (e.key === 'Enter') {
@@ -365,116 +369,116 @@ export const ProjectPanel = () => {
                                         <Button
                                           size="sm"
                                           onClick={() => handleSaveEdit(phase.id, task.id)}
-                                          className="h-6 px-2 bg-green-600 hover:bg-green-700"
+                                          className="h-8 px-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow hover:scale-105"
                                         >
-                                          <Save className="w-3 h-3" />
+                                          <Save className="w-4 h-4" />
                                         </Button>
                                         <Button
                                           size="sm"
                                           variant="outline"
                                           onClick={handleCancelEdit}
-                                          className="h-6 px-2"
+                                          className="h-8 px-3 rounded-full shadow"
                                         >
-                                          <X className="w-3 h-3" />
+                                          <X className="w-4 h-4" />
                                         </Button>
                                       </div>
                                     )}
                                   </div>
                                 ) : task.name === 'Branding' && task.colors ? (
-                                  <div className="mt-1 flex items-center space-x-1">
-                                    <Info className="w-3 h-3 text-blue-600" />
-                                    <div className="flex items-center space-x-1">
-                                      <div className="flex items-center space-x-1">
+                                  <div className="mt-2 flex items-center space-x-2">
+                                    <Info className="w-4 h-4 text-blue-600" />
+                                    <div className="flex items-center space-x-2">
+                                      <div className="flex items-center space-x-2">
                                         <div 
-                                          className="w-4 h-4 rounded border border-gray-300" 
+                                          className="w-5 h-5 rounded-full border border-gray-300 shadow" 
                                           style={{ backgroundColor: task.colors.primary }}
                                         />
-                                        <span className="text-xs text-gray-600">{task.colors.primary}</span>
+                                        <span className="text-xs text-gray-600 font-mono">{task.colors.primary}</span>
                                       </div>
                                       <span className="text-xs text-gray-400">+</span>
-                                      <div className="flex items-center space-x-1">
+                                      <div className="flex items-center space-x-2">
                                         <div 
-                                          className="w-4 h-4 rounded border border-gray-300" 
+                                          className="w-5 h-5 rounded-full border border-gray-300 shadow" 
                                           style={{ backgroundColor: task.colors.secondary }}
                                         />
-                                        <span className="text-xs text-gray-600">{task.colors.secondary}</span>
+                                        <span className="text-xs text-gray-600 font-mono">{task.colors.secondary}</span>
                                       </div>
                                       {task.source && (
-                                        <span className="text-xs text-gray-400" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
-                                          {task.source === 'chatbot' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                                        <span className="text-xs text-gray-400 ml-2" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
+                                          {task.source === 'chatbot' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                                         </span>
                                       )}
                                       <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleEditTask(task.id, task.details || "", task.colors)}
-                                        className="h-4 w-4 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                        className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full"
                                       >
-                                        <Edit2 className="w-3 h-3" />
+                                        <Edit2 className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleClearDetails(phase.id, task.id)}
-                                        className="h-4 w-4 p-0 text-red-600 hover:text-red-800 hover:bg-red-100"
+                                        className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full"
                                         title="Clear colors"
                                       >
-                                        <Trash2 className="w-3 h-3" />
+                                        <Trash2 className="w-4 h-4" />
                                       </Button>
                                     </div>
                                   </div>
                                 ) : task.name === 'Branding' && !task.colors ? (
-                                  <div className="mt-1 flex items-center space-x-1">
+                                  <div className="mt-2 flex items-center space-x-2">
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleEditTask(task.id, "", { primary: '#3B82F6', secondary: '#10B981' })}
-                                      className="h-6 px-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                                      className="h-8 px-3 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full shadow"
                                     >
-                                      <Edit2 className="w-3 h-3 mr-1" />
+                                      <Edit2 className="w-4 h-4 mr-1" />
                                       Add colors
                                     </Button>
                                   </div>
                                 ) : task.details ? (
-                                  <div className="mt-1 flex items-center space-x-1">
-                                    <Info className="w-3 h-3 text-blue-600" />
-                                    <div className="flex items-center space-x-1">
-                                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                  <div className="mt-2 flex items-center space-x-2">
+                                    <Info className="w-4 h-4 text-blue-600" />
+                                    <div className="flex items-center space-x-2">
+                                    <span className="text-xs text-blue-700 bg-blue-50 px-3 py-1 rounded-full font-semibold shadow-sm">
                                       {task.details}
                                     </span>
                                       {task.source && (
-                                        <span className="text-xs text-gray-400" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
-                                          {task.source === 'chatbot' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                                        <span className="text-xs text-gray-400 ml-2" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
+                                          {task.source === 'chatbot' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                                         </span>
                                       )}
                                       <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleEditTask(task.id, task.details || "", task.colors)}
-                                        className="h-4 w-4 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                        className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full"
                                       >
-                                        <Edit2 className="w-3 h-3" />
+                                        <Edit2 className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleClearDetails(phase.id, task.id)}
-                                        className="h-4 w-4 p-0 text-red-600 hover:text-red-800 hover:bg-red-100"
+                                        className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full"
                                         title="Clear details"
                                       >
-                                        <Trash2 className="w-3 h-3" />
+                                        <Trash2 className="w-4 h-4" />
                                       </Button>
                                     </div>
                                   </div>
                                 ) : (
-                                  <div className="mt-1 flex items-center space-x-1">
+                                  <div className="mt-2 flex items-center space-x-2">
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleEditTask(task.id, "", task.colors)}
-                                      className="h-6 px-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                                      className="h-8 px-3 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full shadow"
                                     >
-                                      <Edit2 className="w-3 h-3 mr-1" />
+                                      <Edit2 className="w-4 h-4 mr-1" />
                                       Add details
                                     </Button>
                                   </div>
@@ -482,14 +486,13 @@ export const ProjectPanel = () => {
                               </div>
                             </div>
 
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-3">
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${getStatusColor(task.status)}`}
+                                className={`text-xs rounded-full px-3 py-1 font-bold shadow-sm border-2 ${getStatusColor(task.status)}`}
                               >
                                 {getStatusLabel(task.status)}
                               </Badge>
-                              
                               {/* Call Venue Button for Book Venue task */}
                               {task.name === 'Book Venue' && (
                                 <div className="flex items-center space-x-1">
@@ -498,54 +501,50 @@ export const ProjectPanel = () => {
                                       variant="outline"
                                       size="sm"
                                       onClick={handleCallVenue}
-                                      className="h-6 px-2 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-green-400 to-blue-400 text-white border-none shadow rounded-full hover:scale-105"
                                       title="Call venue at +17165134580"
                                     >
-                                      <Phone className="w-3 h-3 mr-1" />
+                                      <Phone className="w-4 h-4 mr-1" />
                                       Call Venue
                                     </Button>
                                   )}
-                                  
                                   {callStatus.status === 'calling' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       disabled
-                                      className="h-6 px-2 text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                      className="h-8 px-3 text-xs bg-blue-100 text-blue-700 border-blue-200 rounded-full shadow animate-pulse"
                                     >
-                                      <Phone className="w-3 h-3 mr-1 animate-pulse" />
+                                      <Phone className="w-4 h-4 mr-1 animate-pulse" />
                                       Calling...
                                     </Button>
                                   )}
-                                  
                                   {callStatus.status === 'connected' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={handleEndCall}
-                                      className="h-6 px-2 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-red-400 to-pink-400 text-white border-none shadow rounded-full hover:scale-105"
                                       title="End call"
                                     >
-                                      <Phone className="w-3 h-3 mr-1" />
+                                      <Phone className="w-4 h-4 mr-1" />
                                       End Call
                                     </Button>
                                   )}
-                                  
                                   {callStatus.status === 'error' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={handleCallVenue}
-                                      className="h-6 px-2 text-xs bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-orange-400 to-yellow-400 text-white border-none shadow rounded-full hover:scale-105"
                                       title={`Retry call: ${callStatus.error}`}
                                     >
-                                      <Phone className="w-3 h-3 mr-1" />
+                                      <Phone className="w-4 h-4 mr-1" />
                                       Retry
                                     </Button>
                                   )}
                                 </div>
                               )}
-                              
                               {/* Call Restaurant Button for Plan Meals task */}
                               {task.name === 'Plan Meals' && (
                                 <div className="flex items-center space-x-1">
@@ -554,60 +553,56 @@ export const ProjectPanel = () => {
                                       variant="outline"
                                       size="sm"
                                       onClick={handleCallRestaurant}
-                                      className="h-6 px-2 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-green-400 to-blue-400 text-white border-none shadow rounded-full hover:scale-105"
                                       title="Call restaurant at +17165134580"
                                     >
-                                      <Phone className="w-3 h-3 mr-1" />
+                                      <Phone className="w-4 h-4 mr-1" />
                                       Call Restaurant
                                     </Button>
                                   )}
-                                  
                                   {callStatus.status === 'calling' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       disabled
-                                      className="h-6 px-2 text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                      className="h-8 px-3 text-xs bg-blue-100 text-blue-700 border-blue-200 rounded-full shadow animate-pulse"
                                     >
-                                      <Phone className="w-3 h-3 mr-1 animate-pulse" />
+                                      <Phone className="w-4 h-4 mr-1 animate-pulse" />
                                       Calling...
                                     </Button>
                                   )}
-                                  
                                   {callStatus.status === 'connected' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={handleEndRestaurantCall}
-                                      className="h-6 px-2 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-red-400 to-pink-400 text-white border-none shadow rounded-full hover:scale-105"
                                       title="End call"
                                     >
-                                      <Phone className="w-3 h-3 mr-1" />
+                                      <Phone className="w-4 h-4 mr-1" />
                                       End Call
                                     </Button>
                                   )}
-                                  
                                   {callStatus.status === 'error' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={handleCallRestaurant}
-                                      className="h-6 px-2 text-xs bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-orange-400 to-yellow-400 text-white border-none shadow rounded-full hover:scale-105"
                                       title={`Retry call: ${callStatus.error}`}
                                     >
-                                      <Phone className="w-3 h-3 mr-1" />
+                                      <Phone className="w-4 h-4 mr-1" />
                                       Retry
                                     </Button>
                                   )}
                                 </div>
                               )}
-                              
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 shadow"
                               >
-                                <Settings className="w-3 h-3" />
+                                <Settings className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>

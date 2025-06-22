@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ProjectPanel } from "@/components/ProjectPanel";
 import { ProjectProvider } from "@/lib/project-context";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const Index = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -22,10 +23,23 @@ const Index = () => {
         </div>
 
         <div className="flex min-h-screen">
-          {/* Left Panel - AI Chatbot */}
+          {/* Desktop: Resizable Panels */}
+          <div className="hidden lg:flex w-full">
+            <ResizablePanelGroup direction="horizontal" className="w-full h-screen">
+              <ResizablePanel defaultSize={30} minSize={20} maxSize={50} className="h-full">
+                <ChatPanel />
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={70} minSize={50} className="h-full">
+                <ProjectPanel />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+
+          {/* Mobile: Modal ChatPanel */}
           <div className={`${
             isChatOpen ? 'fixed inset-0 z-40' : 'hidden'
-          } lg:relative lg:flex lg:w-1/3 xl:w-1/4`}>
+          } lg:hidden`}>
             <ChatPanel onClose={() => setIsChatOpen(false)} />
           </div>
 
@@ -37,8 +51,8 @@ const Index = () => {
             />
           )}
 
-          {/* Right Panel - Project Phases */}
-          <div className="flex-1 lg:w-2/3 xl:w-3/4">
+          {/* Mobile: ProjectPanel always visible */}
+          <div className="flex-1 lg:hidden">
             <ProjectPanel />
           </div>
         </div>
