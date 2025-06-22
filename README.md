@@ -4,6 +4,20 @@
 
 **URL**: https://lovable.dev/projects/8b78dba3-32ed-423f-a550-9486cc142d02
 
+## Setup
+
+### Google Gemini API Setup
+
+This project uses Google's Gemini API for the chatbot functionality. To get it working:
+
+1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey) to get your API key
+2. Create a `.env` file in the root directory
+3. Add your API key to the `.env` file:
+   ```
+   VITE_GEMINI_API_KEY=your_actual_api_key_here
+   ```
+4. Restart your development server
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

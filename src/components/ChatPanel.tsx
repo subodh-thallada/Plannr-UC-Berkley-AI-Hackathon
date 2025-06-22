@@ -1,25 +1,18 @@
-
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip, Send, X, Bot, User } from "lucide-react";
-
-interface Message {
-  id: string;
-  type: 'user' | 'bot';
-  content: string;
-  timestamp: Date;
-}
+import { sendMessage, initializeChat, resetChat, ChatMessage } from "@/lib/gemini";
 
 interface ChatPanelProps {
   onClose?: () => void;
 }
 
 export const ChatPanel = ({ onClose }: ChatPanelProps) => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       type: 'bot',
@@ -28,12 +21,18 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
     }
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
+  // Initialize chat on component mount
+  useEffect(() => {
+    initializeChat();
+  }, []);
 
-    const newMessage: Message = {
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const newMessage: ChatMessage = {
       id: Date.now().toString(),
       type: 'user',
       content: inputValue,
@@ -42,17 +41,31 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
 
     setMessages(prev => [...prev, newMessage]);
     setInputValue("");
+    setIsLoading(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse: Message = {
+    try {
+      const response = await sendMessage(inputValue);
+      
+      const botResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: "I understand your request. In a full implementation, I would process this command and update your project accordingly!",
+        content: response,
         timestamp: new Date()
       };
+      
       setMessages(prev => [...prev, botResponse]);
-    }, 1000);
+    } catch (error) {
+      console.error('Error getting response:', error);
+      const errorResponse: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: "Sorry, I encountered an error processing your request. Please try again.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFileUpload = () => {
@@ -119,6 +132,24 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
               </div>
             </div>
           ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="flex max-w-[80%] flex-row">
+                <Avatar className="w-8 h-8 mr-2">
+                  <AvatarFallback className="bg-gray-200">
+                    <Bot className="w-4 h-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="rounded-lg p-3 bg-gray-100 text-gray-800">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
 
@@ -139,10 +170,11 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
             placeholder="Type your command here..."
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             className="border-blue-200 focus:border-blue-400"
+            disabled={isLoading}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || isLoading}
             className="shrink-0 bg-blue-600 hover:bg-blue-700"
           >
             <Send className="w-4 h-4" />

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+#API KEYS
+VITE_GEMINI_API_KEY=AIzaSyCnMGrWk5aPPeey9K2SsVkRwBvyEtlvCRg
