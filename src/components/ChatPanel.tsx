@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip, Send, X, Bot, User, CheckCircle } from "lucide-react";
-import { sendMessage, sendMessageWithFiles, initializeChat, resetChat, ChatMessage } from "@/lib/gemini";
+import { sendMessage, sendMessageWithFiles, initializeChat, resetChat, ChatMessage, sendLettaMessage, initializeLettaAgent } from "@/lib/gemini";
 import { useProject } from "@/lib/project-context";
 import { saveTaskUpdate } from "@/lib/supabase";
 
@@ -26,6 +26,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [useLetta, setUseLetta] = useState(false);
 
   // Initialize chat on component mount
   useEffect(() => {
@@ -47,77 +48,87 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
     setIsLoading(true);
 
     try {
-      const result = await sendMessage(inputValue);
-      
-      const botResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'bot',
-        content: result.response,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, botResponse]);
-
-      // Handle multiple task updates if detected
-      if (result.taskUpdates && result.taskUpdates.length > 0) {
-        // Apply all task updates
-        result.taskUpdates.forEach(taskUpdate => {
-          if (taskUpdate.type === 'branding' && taskUpdate.colors) {
-            // Handle branding with colors
-            updateTask(taskUpdate.phaseId, taskUpdate.taskId, {
-              details: taskUpdate.details,
-              colors: taskUpdate.colors,
-              source: 'chatbot',
-              completed: true,
-              status: 'done'
-            });
-            // Save to Supabase
-            const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
-            saveTaskUpdate({
-              phaseId: taskUpdate.phaseId,
-              taskId: taskUpdate.taskId,
-              taskName: task?.name || "",
-              details: taskUpdate.details,
-              colors: taskUpdate.colors,
-              source: 'chatbot',
-              status: 'done',
-              completed: true,
-            });
-          } else {
-            // Handle regular task updates
-            addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
-            const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
-            saveTaskUpdate({
-              phaseId: taskUpdate.phaseId,
-              taskId: taskUpdate.taskId,
-              taskName: task?.name || "",
-              details: taskUpdate.details,
-              source: 'chatbot',
-              status: 'done',
-              completed: true,
-            });
-          }
-        });
+      let botResponse: ChatMessage;
+      if (useLetta) {
+        await initializeLettaAgent();
+        const lettaReply = await sendLettaMessage(inputValue);
+        botResponse = {
+          id: (Date.now() + 1).toString(),
+          type: 'bot',
+          content: lettaReply,
+          timestamp: new Date()
+        };
+      } else {
+        const result = await sendMessage(inputValue);
+        botResponse = {
+          id: (Date.now() + 1).toString(),
+          type: 'bot',
+          content: result.response,
+          timestamp: new Date()
+        };
         
-        // Add confirmation messages for each update
-        result.taskUpdates.forEach((taskUpdate, index) => {
-          let updateContent = `✅ I've automatically updated your ${taskUpdate.type} task with: "${taskUpdate.details}"`;
+        // Handle multiple task updates if detected
+        if (result.taskUpdates && result.taskUpdates.length > 0) {
+          // Apply all task updates
+          result.taskUpdates.forEach(taskUpdate => {
+            if (taskUpdate.type === 'branding' && taskUpdate.colors) {
+              // Handle branding with colors
+              updateTask(taskUpdate.phaseId, taskUpdate.taskId, {
+                details: taskUpdate.details,
+                colors: taskUpdate.colors,
+                source: 'chatbot',
+                completed: true,
+                status: 'done'
+              });
+              // Save to Supabase
+              const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
+              saveTaskUpdate({
+                phaseId: taskUpdate.phaseId,
+                taskId: taskUpdate.taskId,
+                taskName: task?.name || "",
+                details: taskUpdate.details,
+                colors: taskUpdate.colors,
+                source: 'chatbot',
+                status: 'done',
+                completed: true,
+              });
+            } else {
+              // Handle regular task updates
+              addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
+              const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
+              saveTaskUpdate({
+                phaseId: taskUpdate.phaseId,
+                taskId: taskUpdate.taskId,
+                taskName: task?.name || "",
+                details: taskUpdate.details,
+                source: 'chatbot',
+                status: 'done',
+                completed: true,
+              });
+            }
+          });
           
-          // Add color preview for branding updates
-          if (taskUpdate.type === 'branding' && taskUpdate.colors) {
-            updateContent = `✅ I've automatically updated your branding with: Primary: ${taskUpdate.colors.primary}, Secondary: ${taskUpdate.colors.secondary}`;
-          }
-          
-          const updateMessage: ChatMessage = {
-            id: (Date.now() + 2 + index).toString(),
-            type: 'bot',
-            content: updateContent,
-            timestamp: new Date()
-          };
-          
-          setMessages(prev => [...prev, updateMessage]);
-        });
+          // Add confirmation messages for each update
+          result.taskUpdates.forEach((taskUpdate, index) => {
+            let updateContent = `✅ I've automatically updated your ${taskUpdate.type} task with: "${taskUpdate.details}"`;
+            
+            // Add color preview for branding updates
+            if (taskUpdate.type === 'branding' && taskUpdate.colors) {
+              updateContent = `✅ I've automatically updated your branding with: Primary: ${taskUpdate.colors.primary}, Secondary: ${taskUpdate.colors.secondary}`;
+            }
+            
+            const updateMessage: ChatMessage = {
+              id: (Date.now() + 2 + index).toString(),
+              type: 'bot',
+              content: updateContent,
+              timestamp: new Date()
+            };
+            
+            setMessages(prev => [...prev, updateMessage]);
+          });
+        }
       }
+      setMessages(prev => [...prev, botResponse]);
     } catch (error) {
       console.error('Error getting response:', error);
       const errorResponse: ChatMessage = {
@@ -166,7 +177,18 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
           </Button>
         )}
       </div>
-
+      {/* Letta toggle */}
+      <div className="flex items-center justify-center p-2 bg-blue-50 border-b border-blue-100">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={useLetta} onChange={e => setUseLetta(e.target.checked)} />
+          <span className="text-xs text-blue-700">Enable Letta Memory</span>
+        </label>
+      </div>
+      {useLetta && (
+        <div className="text-center text-xs text-blue-700 bg-blue-50 py-1 border-b border-blue-100">
+          Letta memory is enabled. Your chat will be remembered across sessions.
+        </div>
+      )}
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">

@@ -1,4 +1,5 @@
 import { GoogleGenAI, createUserContent, createPartFromUri } from '@google/genai';
+import { LettaClient } from '@letta-ai/letta-client';
 
 // Initialize the Gemini API
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -8,6 +9,16 @@ if (!API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY || '' });
+
+const LETTA_API_KEY = import.meta.env.VITE_LETTA_API_KEY;
+
+if (!LETTA_API_KEY) {
+  console.error('VITE_LETTA_API_KEY is not set in environment variables');
+}
+
+const lettaClient = new LettaClient({ token: LETTA_API_KEY || '' });
+
+let agentId: string | null = null;
 
 export interface ChatMessage {
   id: string;
@@ -484,4 +495,43 @@ export async function generateMarketingImages({ prompt, n }: { prompt: string; n
     return urls.slice(0, n).map((url: string) => ({ url }));
   }
   throw new Error('No images returned from Gemini API');
-} 
+}
+
+export const initializeLettaAgent = async () => {
+  if (agentId) return agentId;
+  // Create a new agent if not already created
+  const agent = await lettaClient.agents.create({
+    model: 'openai/gpt-4.1',
+    embedding: 'openai/text-embedding-3-small',
+    memory_blocks: [
+      { label: 'persona', value: 'You are a helpful project assistant for project management.' }
+    ],
+    tools: [],
+  });
+  agentId = agent.id;
+  return agentId;
+};
+
+export const sendLettaMessage = async (message: string) => {
+  if (!agentId) {
+    await initializeLettaAgent();
+  }
+  const response = await lettaClient.agents.messages.create({
+    agent_id: agentId!,
+    messages: [
+      { role: 'user', content: message }
+    ]
+  });
+  // Find the assistant's reply
+  const assistantMsg = response.messages.find((msg: any) => msg.message_type === 'assistant_message');
+  return assistantMsg ? assistantMsg.content : '';
+};
+
+export const getLettaMemory = async () => {
+  if (!agentId) {
+    await initializeLettaAgent();
+  }
+  // Retrieve the agent's conversation history
+  const history = await lettaClient.agents.messages.list({ agent_id: agentId! });
+  return history.messages;
+}; 

@@ -66,6 +66,22 @@ This project uses VAPI for automated venue calling. To get it working:
 
 **Note**: If any of these are not configured, the venue calling feature will show specific error messages asking you to configure the missing values.
 
+### Letta API Setup (for chatbot memory)
+
+This project supports Letta memory for the chatbot, allowing conversations to persist across sessions.
+
+1. **Get your Letta API key**:
+   - Sign up at [Letta Cloud](https://letta.com/) and create an API key from your dashboard.
+2. **Configure environment variables**:
+   - Add this to your `.env` file:
+     ```
+     VITE_LETTA_API_KEY=your_letta_api_key_here
+     ```
+3. **Restart your development server**
+
+**How to use Letta memory:**
+- In the chat panel, enable the "Letta Memory" toggle to use Letta for persistent memory. When enabled, your chat will be remembered across sessions.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

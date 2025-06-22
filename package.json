@@ -13,6 +13,7 @@
   "dependencies": {
     "@google/genai": "^1.6.0",
     "@hookform/resolvers": "^3.9.0",
+    "@letta-ai/letta-client": "^0.1.132",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
