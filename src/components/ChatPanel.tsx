@@ -7,13 +7,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip, Send, X, Bot, User, CheckCircle } from "lucide-react";
 import { sendMessage, sendMessageWithFiles, initializeChat, resetChat, ChatMessage } from "@/lib/gemini";
 import { useProject } from "@/lib/project-context";
+import { saveTaskUpdate } from "@/lib/supabase";
 
 interface ChatPanelProps {
   onClose?: () => void;
 }
 
 export const ChatPanel = ({ onClose }: ChatPanelProps) => {
-  const { addTaskDetails, updateTask } = useProject();
+  const { addTaskDetails, updateTask, phases } = useProject();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -70,9 +71,31 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
               completed: true,
               status: 'done'
             });
+            // Save to Supabase
+            const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
+            saveTaskUpdate({
+              phaseId: taskUpdate.phaseId,
+              taskId: taskUpdate.taskId,
+              taskName: task?.name || "",
+              details: taskUpdate.details,
+              colors: taskUpdate.colors,
+              source: 'chatbot',
+              status: 'done',
+              completed: true,
+            });
           } else {
             // Handle regular task updates
             addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
+            const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
+            saveTaskUpdate({
+              phaseId: taskUpdate.phaseId,
+              taskId: taskUpdate.taskId,
+              taskName: task?.name || "",
+              details: taskUpdate.details,
+              source: 'chatbot',
+              status: 'done',
+              completed: true,
+            });
           }
         });
         
@@ -259,8 +282,29 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
                         completed: true,
                         status: 'done'
                       });
+                      const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
+                      saveTaskUpdate({
+                        phaseId: taskUpdate.phaseId,
+                        taskId: taskUpdate.taskId,
+                        taskName: task?.name || "",
+                        details: taskUpdate.details,
+                        colors: taskUpdate.colors,
+                        source: 'chatbot',
+                        status: 'done',
+                        completed: true,
+                      });
                     } else {
                       addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
+                      const task = phases.flatMap(p => p.tasks).find(t => t.id === taskUpdate.taskId);
+                      saveTaskUpdate({
+                        phaseId: taskUpdate.phaseId,
+                        taskId: taskUpdate.taskId,
+                        taskName: task?.name || "",
+                        details: taskUpdate.details,
+                        source: 'chatbot',
+                        status: 'done',
+                        completed: true,
+                      });
                     }
                   });
                   result.taskUpdates.forEach((taskUpdate, index) => {

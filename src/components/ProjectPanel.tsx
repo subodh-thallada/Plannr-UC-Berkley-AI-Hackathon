@@ -9,6 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronRight, Settings, Info, Edit2, Save, X, Bot, User, Trash2, Phone } from "lucide-react";
 import { useProject } from "@/lib/project-context";
 import { callVenue, getCurrentCallStatus, endCall, CallStatus, callRestaurant } from "@/lib/vapi-service";
+import { saveTaskUpdate, clearPhase1TaskUpdates } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export const ProjectPanel = () => {
   const [viewType, setViewType] = useState<'timeline' | 'category'>('timeline');
@@ -18,6 +20,7 @@ export const ProjectPanel = () => {
   const [editingColors, setEditingColors] = useState<{ primary: string; secondary: string }>({ primary: '#3B82F6', secondary: '#10B981' });
   const [callStatus, setCallStatus] = useState<CallStatus>({ id: '', status: 'idle' });
   const { phases, togglePhase, toggleTask, updateTask } = useProject();
+  const { toast } = useToast();
 
   // Task to category mapping
   const taskCategoryMap: Record<string, 'logistics' | 'marketing' | 'website' | 'outreach'> = {
@@ -101,12 +104,22 @@ export const ProjectPanel = () => {
   };
 
   const handleSaveEdit = (phaseId: string, taskId: string) => {
+    const task = phases.flatMap(p => p.tasks).find(t => t.id === taskId);
     if (editValue.trim() === "") {
-      // If empty, remove the details entirely
       updateTask(phaseId, taskId, { 
         details: undefined,
         source: undefined,
         colors: undefined
+      });
+      saveTaskUpdate({
+        phaseId,
+        taskId,
+        taskName: task?.name || "",
+        details: undefined,
+        colors: undefined,
+        source: undefined,
+        status: undefined,
+        completed: undefined,
       });
     } else {
       updateTask(phaseId, taskId, { 
@@ -114,17 +127,37 @@ export const ProjectPanel = () => {
         source: 'manual',
         colors: editingColors
       });
+      saveTaskUpdate({
+        phaseId,
+        taskId,
+        taskName: task?.name || "",
+        details: editValue,
+        colors: editingColors,
+        source: 'manual',
+        status: undefined,
+        completed: undefined,
+      });
     }
     setEditingTask(null);
     setEditValue("");
   };
 
   const handleSaveColors = (phaseId: string, taskId: string) => {
+    const task = phases.flatMap(p => p.tasks).find(t => t.id === taskId);
     updateTask(phaseId, taskId, { 
       colors: editingColors,
       source: 'manual',
       completed: true,
       status: 'done'
+    });
+    saveTaskUpdate({
+      phaseId,
+      taskId,
+      taskName: task?.name || "",
+      colors: editingColors,
+      source: 'manual',
+      status: 'done',
+      completed: true,
     });
     setEditingTask(null);
   };
@@ -135,10 +168,21 @@ export const ProjectPanel = () => {
   };
 
   const handleClearDetails = (phaseId: string, taskId: string) => {
+    const task = phases.flatMap(p => p.tasks).find(t => t.id === taskId);
     updateTask(phaseId, taskId, { 
       details: undefined,
       source: undefined,
       colors: undefined
+    });
+    saveTaskUpdate({
+      phaseId,
+      taskId,
+      taskName: task?.name || "",
+      details: undefined,
+      colors: undefined,
+      source: undefined,
+      status: undefined,
+      completed: undefined,
     });
   };
 
@@ -146,30 +190,46 @@ export const ProjectPanel = () => {
     try {
       const result = await callVenue();
       setCallStatus(result);
-      
       if (result.status === 'connected') {
-        // Mark the task as in progress
         updateTask('2', '2-4', { 
           status: 'in-progress',
           details: 'Call in progress to +17165134580'
         });
+        saveTaskUpdate({
+          phaseId: '2',
+          taskId: '2-4',
+          taskName: 'Book Venue',
+          details: 'Call in progress to +17165134580',
+          status: 'in-progress',
+        });
       } else if (result.status === 'error') {
         console.error('Call failed:', result.error);
-        // Update task with error details
         updateTask('2', '2-4', { 
           status: 'pending',
           details: `Call failed: ${result.error}`
+        });
+        saveTaskUpdate({
+          phaseId: '2',
+          taskId: '2-4',
+          taskName: 'Book Venue',
+          details: `Call failed: ${result.error}`,
+          status: 'pending',
         });
       }
     } catch (error) {
       console.error('Error calling venue:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to start call';
       setCallStatus({ id: '', status: 'error', error: errorMessage });
-      
-      // Update task with error details
       updateTask('2', '2-4', { 
         status: 'pending',
         details: `Call error: ${errorMessage}`
+      });
+      saveTaskUpdate({
+        phaseId: '2',
+        taskId: '2-4',
+        taskName: 'Book Venue',
+        details: `Call error: ${errorMessage}`,
+        status: 'pending',
       });
     }
   };
@@ -177,12 +237,18 @@ export const ProjectPanel = () => {
   const handleEndCall = async () => {
     await endCall();
     setCallStatus({ id: '', status: 'idle' });
-    
-    // Mark the task as completed
     updateTask('2', '2-4', { 
       status: 'done',
       completed: true,
       details: 'Venue booking call completed'
+    });
+    saveTaskUpdate({
+      phaseId: '2',
+      taskId: '2-4',
+      taskName: 'Book Venue',
+      details: 'Venue booking call completed',
+      status: 'done',
+      completed: true,
     });
   };
 
@@ -190,30 +256,46 @@ export const ProjectPanel = () => {
     try {
       const result = await callRestaurant();
       setCallStatus(result);
-      
       if (result.status === 'connected') {
-        // Mark the task as in progress
         updateTask('2', '2-5', { 
           status: 'in-progress',
           details: 'Call in progress to restaurant at +17165134580'
         });
+        saveTaskUpdate({
+          phaseId: '2',
+          taskId: '2-5',
+          taskName: 'Plan Meals',
+          details: 'Call in progress to restaurant at +17165134580',
+          status: 'in-progress',
+        });
       } else if (result.status === 'error') {
         console.error('Restaurant call failed:', result.error);
-        // Update task with error details
         updateTask('2', '2-5', { 
           status: 'pending',
           details: `Restaurant call failed: ${result.error}`
+        });
+        saveTaskUpdate({
+          phaseId: '2',
+          taskId: '2-5',
+          taskName: 'Plan Meals',
+          details: `Restaurant call failed: ${result.error}`,
+          status: 'pending',
         });
       }
     } catch (error) {
       console.error('Error calling restaurant:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to start restaurant call';
       setCallStatus({ id: '', status: 'error', error: errorMessage });
-      
-      // Update task with error details
       updateTask('2', '2-5', { 
         status: 'pending',
         details: `Restaurant call error: ${errorMessage}`
+      });
+      saveTaskUpdate({
+        phaseId: '2',
+        taskId: '2-5',
+        taskName: 'Plan Meals',
+        details: `Restaurant call error: ${errorMessage}`,
+        status: 'pending',
       });
     }
   };
@@ -221,13 +303,37 @@ export const ProjectPanel = () => {
   const handleEndRestaurantCall = async () => {
     await endCall();
     setCallStatus({ id: '', status: 'idle' });
-    
-    // Mark the task as completed
     updateTask('2', '2-5', { 
       status: 'done',
       completed: true,
       details: 'Restaurant meal planning call completed'
     });
+    saveTaskUpdate({
+      phaseId: '2',
+      taskId: '2-5',
+      taskName: 'Plan Meals',
+      details: 'Restaurant meal planning call completed',
+      status: 'done',
+      completed: true,
+    });
+  };
+
+  const handleClearPhase1 = async () => {
+    await clearPhase1TaskUpdates();
+    // Reset all Phase 1 tasks in UI
+    const phase1 = phases.find(p => p.id === '1');
+    if (phase1) {
+      phase1.tasks.forEach(task => {
+        updateTask('1', task.id, {
+          completed: false,
+          status: 'pending',
+          details: undefined,
+          colors: undefined,
+          source: undefined,
+        });
+      });
+    }
+    toast({ title: "Phase 1 data cleared from database and UI." });
   };
 
   const filteredPhases = viewFilter === 'home'
@@ -372,6 +478,17 @@ export const ProjectPanel = () => {
                             <span className="text-base text-gray-500 font-semibold">
                               {progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0}%
                             </span>
+                            {/* Clear button for Phase 1 only */}
+                            {phase.id === '1' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); handleClearPhase1(); }}
+                                className="ml-2 bg-red-100 text-red-700 border-red-200 hover:bg-red-200 hover:text-red-900 rounded-full shadow"
+                              >
+                                Clear Data
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CollapsibleTrigger>
