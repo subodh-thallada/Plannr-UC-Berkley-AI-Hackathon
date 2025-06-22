@@ -294,6 +294,11 @@ export const ProjectPanel = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
+      {/* Header always at the top */}
+      <div className="px-8 pt-2 pb-4 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl flex flex-col items-start">
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight drop-shadow-sm">Project Management</h1>
+        <p className="text-base text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
+      </div>
       {viewTypeToggle}
       {viewType === 'timeline' ? (
         // Timeline/phase view (as before)
@@ -330,11 +335,6 @@ export const ProjectPanel = () => {
                 Phase 3: Execution
               </Button>
             </div>
-          </div>
-          {/* Header */}
-          <div className="px-8 pt-2 pb-4 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl flex flex-col items-start">
-            <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight drop-shadow-sm">Project Management</h1>
-            <p className="text-base text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
           </div>
           {/* Project Phases */}
           <ScrollArea className="flex-1">
@@ -714,11 +714,6 @@ export const ProjectPanel = () => {
         // Category view
         <>
           {categoryNav}
-          {/* Header for category view */}
-          <div className="px-8 pt-2 pb-4 bg-white/80 backdrop-blur-2xl border-b border-blue-100 shadow-md rounded-b-3xl flex flex-col items-start">
-            <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight drop-shadow-sm">Project Management</h1>
-            <p className="text-base text-gray-600 font-medium">Manage your project phases and tasks with AI assistance</p>
-          </div>
           <ScrollArea className="flex-1">
             <div className="p-8 space-y-8">
               {['logistics', 'marketing', 'website', 'outreach'].map(category => (
