@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,121 +5,76 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Settings } from "lucide-react";
-
-interface Task {
-  id: string;
-  name: string;
-  completed: boolean;
-  status: 'pending' | 'in-progress' | 'done';
-}
-
-interface Phase {
-  id: string;
-  name: string;
-  icon: string;
-  tasks: Task[];
-  isOpen: boolean;
-}
+import { ChevronDown, ChevronRight, Settings, Info } from "lucide-react";
+import { useProject } from "@/lib/project-context";
 
 export const ProjectPanel = () => {
-  const [phases, setPhases] = useState<Phase[]>([
-    {
-      id: '1',
-      name: 'Phase 1: Planning',
-      icon: '📂',
-      isOpen: true,
-      tasks: [
-        { id: '1-1', name: 'Set Timeline', completed: true, status: 'done' },
-        { id: '1-2', name: 'Theme', completed: false, status: 'pending' },
-        { id: '1-3', name: 'Location', completed: false, status: 'in-progress' },
-        { id: '1-4', name: 'Size of event', completed: false, status: 'pending' },
-      ]
-    },
-    {
-      id: '2',
-      name: 'Phase 2: Preparation',
-      icon: '📂',
-      isOpen: false,
-      tasks: [
-        { id: '2-1', name: 'Make Website for event', completed: false, status: 'pending' },
-        { id: '2-2', name: 'Marketing posts for website', completed: false, status: 'pending' },
-        { id: '2-3', name: 'Sponsorship Package', completed: false, status: 'pending' },
-      ]
-    },
-    {
-      id: '3',
-      name: 'Phase 3: Execution',
-      icon: '📂',
-      isOpen: false,
-      tasks: [
-        { id: '3-1', name: 'Enable check-in system', completed: false, status: 'pending' },
-        { id: '3-2', name: 'Create Discord channels', completed: false, status: 'pending' },
-        { id: '3-3', name: 'Start Devpost submission form', completed: false, status: 'pending' },
-      ]
-    }
-  ]);
+  const [viewFilter, setViewFilter] = useState<'home' | '1' | '2' | '3'>('home');
+  const { phases, togglePhase, toggleTask } = useProject();
 
-  const togglePhase = (phaseId: string) => {
-    setPhases(prev => prev.map(phase => 
-      phase.id === phaseId 
-        ? { ...phase, isOpen: !phase.isOpen }
-        : phase
-    ));
-  };
-
-  const toggleTask = (phaseId: string, taskId: string) => {
-    setPhases(prev => prev.map(phase => 
-      phase.id === phaseId 
-        ? {
-            ...phase,
-            tasks: phase.tasks.map(task => 
-              task.id === taskId 
-                ? { 
-                    ...task, 
-                    completed: !task.completed,
-                    status: !task.completed ? 'done' : 'pending'
-                  }
-                : task
-            )
-          }
-        : phase
-    ));
-  };
-
-  const getStatusColor = (status: Task['status']) => {
+  const getStatusColor = (status: 'pending' | 'in-progress' | 'done') => {
     switch (status) {
       case 'done':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'in-progress':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'pending':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getStatusLabel = (status: Task['status']) => {
+  const getStatusLabel = (status: 'pending' | 'in-progress' | 'done') => {
     switch (status) {
       case 'done':
         return 'Done';
       case 'in-progress':
         return 'In Progress';
       case 'pending':
-        return 'Pending';
       default:
         return 'Pending';
     }
   };
 
-  const getPhaseProgress = (phase: Phase) => {
-    const completedTasks = phase.tasks.filter(task => task.completed).length;
+  const getPhaseProgress = (phase: any) => {
+    const completedTasks = phase.tasks.filter((task: any) => task.completed).length;
     return { completed: completedTasks, total: phase.tasks.length };
   };
 
+  const filteredPhases = viewFilter === 'home'
+    ? phases
+    : phases.filter(p => p.id === viewFilter);
+
   return (
     <div className="h-screen flex flex-col">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center gap-2 p-4 border-b border-blue-100 bg-white/70 backdrop-blur-sm">
+        <Button
+          variant={viewFilter === 'home' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('home')}
+        >
+          Home
+        </Button>
+        <Button
+          variant={viewFilter === '1' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('1')}
+        >
+          Phase 1: Planning
+        </Button>
+        <Button
+          variant={viewFilter === '2' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('2')}
+        >
+          Phase 2: Preparation
+        </Button>
+        <Button
+          variant={viewFilter === '3' ? 'default' : 'outline'}
+          onClick={() => setViewFilter('3')}
+        >
+          Phase 3: Execution
+        </Button>
+      </div>
+
       {/* Header */}
       <div className="p-6 bg-white/70 backdrop-blur-sm border-b border-blue-100">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h1>
@@ -130,7 +84,7 @@ export const ProjectPanel = () => {
       {/* Project Phases */}
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-4">
-          {phases.map((phase) => {
+          {filteredPhases.map((phase) => {
             const progress = getPhaseProgress(phase);
             return (
               <Card key={phase.id} className="bg-white/60 backdrop-blur-sm border border-blue-100 shadow-sm">
@@ -153,10 +107,10 @@ export const ProjectPanel = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ 
-                              width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` 
+                            style={{
+                              width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%`
                             }}
                           />
                         </div>
@@ -166,39 +120,47 @@ export const ProjectPanel = () => {
                       </div>
                     </div>
                   </CollapsibleTrigger>
-                  
+
                   <CollapsibleContent>
                     <div className="px-4 pb-4 border-t border-blue-100">
                       <div className="space-y-3 mt-4">
                         {phase.tasks.map((task) => (
-                          <div 
+                          <div
                             key={task.id}
                             className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
-                              task.completed 
-                                ? 'bg-green-50/50 border-green-200' 
+                              task.completed
+                                ? 'bg-green-50/50 border-green-200'
                                 : 'bg-white/80 border-gray-200 hover:border-blue-300'
                             }`}
                           >
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-3 flex-1">
                               <Checkbox
                                 checked={task.completed}
                                 onCheckedChange={() => toggleTask(phase.id, task.id)}
                                 className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                               />
-                              <span 
-                                className={`font-medium ${
-                                  task.completed 
-                                    ? 'text-gray-500 line-through' 
-                                    : 'text-gray-900'
-                                }`}
-                              >
-                                {task.name}
-                              </span>
+                              <div className="flex-1">
+                                <span
+                                  className={`font-medium ${
+                                    task.completed ? 'text-gray-500 line-through' : 'text-gray-900'
+                                  }`}
+                                >
+                                  {task.name}
+                                </span>
+                                {task.details && (
+                                  <div className="mt-1 flex items-center space-x-1">
+                                    <Info className="w-3 h-3 text-blue-600" />
+                                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                      {task.details}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            
+
                             <div className="flex items-center space-x-2">
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={`text-xs ${getStatusColor(task.status)}`}
                               >
                                 {getStatusLabel(task.status)}

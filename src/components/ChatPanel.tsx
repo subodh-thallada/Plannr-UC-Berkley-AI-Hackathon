@@ -4,19 +4,21 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send, X, Bot, User } from "lucide-react";
+import { Paperclip, Send, X, Bot, User, CheckCircle } from "lucide-react";
 import { sendMessage, initializeChat, resetChat, ChatMessage } from "@/lib/gemini";
+import { useProject } from "@/lib/project-context";
 
 interface ChatPanelProps {
   onClose?: () => void;
 }
 
 export const ChatPanel = ({ onClose }: ChatPanelProps) => {
+  const { addTaskDetails } = useProject();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       type: 'bot',
-      content: "Hi! I'm your project assistant. I can help you manage tasks, create calendar events, and automate your workflow. Try saying something like 'Create a new task for Phase 1' or 'Mark the timeline task as complete'!",
+      content: "Hi! I'm your project assistant. I can help you manage tasks, create calendar events, and automate your workflow. Try saying something like 'Timeline: March 15-17, 2024' or 'Location: San Francisco Convention Center' and I'll automatically update your project tasks!",
       timestamp: new Date()
     }
   ]);
@@ -44,16 +46,31 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
     setIsLoading(true);
 
     try {
-      const response = await sendMessage(inputValue);
+      const result = await sendMessage(inputValue);
       
       const botResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: response,
+        content: result.response,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, botResponse]);
+
+      // Handle task updates if detected
+      if (result.taskUpdate) {
+        addTaskDetails(result.taskUpdate.phaseId, result.taskUpdate.taskId, result.taskUpdate.details);
+        
+        // Add a system message to confirm the task update
+        const updateMessage: ChatMessage = {
+          id: (Date.now() + 2).toString(),
+          type: 'bot',
+          content: `✅ I've automatically updated your ${result.taskUpdate.type} task with: "${result.taskUpdate.details}"`,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, updateMessage]);
+      }
     } catch (error) {
       console.error('Error getting response:', error);
       const errorResponse: ChatMessage = {
@@ -120,7 +137,9 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
                 <div className={`rounded-lg p-3 ${
                   message.type === 'user' 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 text-gray-800'
+                    : message.content.includes('✅') 
+                      ? 'bg-green-100 text-green-800 border border-green-200'
+                      : 'bg-gray-100 text-gray-800'
                 }`}>
                   <p className="text-sm">{message.content}</p>
                   <p className={`text-xs mt-1 ${
@@ -167,7 +186,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type your command here..."
+            placeholder="Type your command here... (e.g., 'Timeline: March 15-17')"
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             className="border-blue-200 focus:border-blue-400"
             disabled={isLoading}
