@@ -13,6 +13,8 @@ import { saveTaskUpdate, clearPhase1TaskUpdates } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { generateMarketingImages } from "@/lib/gemini";
+import { saveAs } from 'file-saver';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 
 export const ProjectPanel = () => {
   const [viewType, setViewType] = useState<string>('timeline');
@@ -419,6 +421,123 @@ export const ProjectPanel = () => {
       </div>
     </div>
   );
+
+  // Sponsorship package document generation
+  const handleGenerateSponsorshipDoc = async () => {
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              text: 'Sponsorship Request Package',
+              heading: HeadingLevel.TITLE,
+              spacing: { after: 400 },
+            }),
+            new Paragraph({
+              text: 'Gen AI Hackathon 2024',
+              heading: HeadingLevel.HEADING_1,
+              spacing: { after: 200 },
+            }),
+            new Paragraph({
+              text: 'Event Details:',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('Location: Madison Square Garden'),
+            new Paragraph('Date: October 17-18, 2024'),
+            new Paragraph('Expected Attendance: 400 people'),
+            new Paragraph('Theme: Generative AI'),
+            new Paragraph({ text: '', spacing: { after: 200 } }),
+            new Paragraph({
+              text: 'About the Event:',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('Join us for an exciting two-day hackathon focused on Generative AI, bringing together 400 talented participants, industry leaders, and innovators at the iconic Madison Square Garden. This event will foster creativity, collaboration, and cutting-edge solutions in the field of AI.'),
+            new Paragraph({ text: '', spacing: { after: 200 } }),
+            new Paragraph({
+              text: 'Sponsorship Opportunities:',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('We invite you to support our hackathon as a sponsor. Your contribution will help us provide an exceptional experience for all attendees and promote advancements in AI technology.'),
+            new Paragraph('Sponsorship benefits include:'),
+            new Paragraph('- Brand visibility at the event and online'),
+            new Paragraph('- Opportunities to connect with top talent'),
+            new Paragraph('- Speaking and judging opportunities'),
+            new Paragraph('- Custom engagement options'),
+            new Paragraph({ text: '', spacing: { after: 200 } }),
+            new Paragraph({
+              text: 'Contact Us:',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('For more information or to discuss sponsorship packages, please contact us at hackathon@genai2024.com.'),
+          ],
+        },
+      ],
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, 'GenAI_Hackathon_Sponsorship_Package.docx');
+  };
+
+  // Hackathon agenda document generation
+  const handleGenerateAgendaDoc = async () => {
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              text: 'Gen AI Hackathon 2024 - Event Agenda',
+              heading: HeadingLevel.TITLE,
+              spacing: { after: 400 },
+            }),
+            new Paragraph({
+              text: 'Location: Madison Square Garden',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('Date: October 17-18, 2024'),
+            new Paragraph('Expected Attendance: 400 people'),
+            new Paragraph('Theme: Generative AI'),
+            new Paragraph({ text: '', spacing: { after: 200 } }),
+            new Paragraph({
+              text: 'Day 1 - October 17, 2024',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('08:00 AM - Registration & Breakfast'),
+            new Paragraph('09:00 AM - Opening Ceremony & Welcome'),
+            new Paragraph('09:30 AM - Keynote: The Future of Generative AI'),
+            new Paragraph('10:00 AM - Team Formation & Hacking Begins'),
+            new Paragraph('12:30 PM - Lunch Break'),
+            new Paragraph('01:30 PM - Workshop: Building with Gen AI APIs'),
+            new Paragraph('03:00 PM - Sponsor Booths & Networking'),
+            new Paragraph('06:00 PM - Dinner'),
+            new Paragraph('07:00 PM - Evening Check-in & Social'),
+            new Paragraph('11:00 PM - Venue Closes for Day 1'),
+            new Paragraph({ text: '', spacing: { after: 200 } }),
+            new Paragraph({
+              text: 'Day 2 - October 18, 2024',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('08:00 AM - Venue Opens & Breakfast'),
+            new Paragraph('09:00 AM - Hacking Continues'),
+            new Paragraph('12:00 PM - Lunch Break'),
+            new Paragraph('01:00 PM - Project Submission Deadline'),
+            new Paragraph('01:30 PM - Demos & Judging'),
+            new Paragraph('04:00 PM - Awards Ceremony'),
+            new Paragraph('04:30 PM - Closing Remarks'),
+            new Paragraph('05:00 PM - Event Ends'),
+            new Paragraph({ text: '', spacing: { after: 200 } }),
+            new Paragraph({
+              text: 'Contact Us:',
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph('For questions or more information, contact hackathon@genai2024.com.'),
+          ],
+        },
+      ],
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, 'GenAI_Hackathon_Agenda.docx');
+  };
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -961,6 +1080,26 @@ export const ProjectPanel = () => {
                                       ))}
                                     </div>
                                   )}
+                                  {task.name === 'Make package' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-blue-500 to-green-500 text-white border-none shadow rounded-full hover:scale-105"
+                                      onClick={handleGenerateSponsorshipDoc}
+                                    >
+                                      Generate Sponsorship Doc
+                                    </Button>
+                                  )}
+                                  {task.name === 'Agenda maker' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 px-3 text-xs bg-gradient-to-r from-blue-500 to-green-500 text-white border-none shadow rounded-full hover:scale-105"
+                                      onClick={handleGenerateAgendaDoc}
+                                    >
+                                      Download Agenda
+                                    </Button>
+                                  )}
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -1436,6 +1575,16 @@ export const ProjectPanel = () => {
                                     </div>
                                   ))}
                                 </div>
+                              )}
+                              {task.name === 'Make package' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-3 text-xs bg-gradient-to-r from-blue-500 to-green-500 text-white border-none shadow rounded-full hover:scale-105"
+                                  onClick={handleGenerateSponsorshipDoc}
+                                >
+                                  Generate Sponsorship Doc
+                                </Button>
                               )}
                               <Button
                                 variant="ghost"

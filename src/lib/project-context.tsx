@@ -79,6 +79,8 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
         { id: '3-1', name: 'Make Discord channels', completed: false, status: 'pending' },
         { id: '3-2', name: 'Automatically send sponsors the emails', completed: false, status: 'pending' },
         { id: '3-3', name: 'Email people to mentor + volunteer', completed: false, status: 'pending' },
+        { id: '3-4', name: 'Make package', completed: false, status: 'pending' },
+        { id: '3-5', name: 'Agenda maker', completed: false, status: 'pending' },
       ]
     }
   ]);
