@@ -3,14 +3,17 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Settings, Info } from "lucide-react";
+import { ChevronDown, ChevronRight, Settings, Info, Edit2, Save, X, Bot, User, Trash2 } from "lucide-react";
 import { useProject } from "@/lib/project-context";
 
 export const ProjectPanel = () => {
   const [viewFilter, setViewFilter] = useState<'home' | '1' | '2' | '3'>('home');
-  const { phases, togglePhase, toggleTask } = useProject();
+  const [editingTask, setEditingTask] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const { phases, togglePhase, toggleTask, updateTask } = useProject();
 
   const getStatusColor = (status: 'pending' | 'in-progress' | 'done') => {
     switch (status) {
@@ -39,6 +42,49 @@ export const ProjectPanel = () => {
   const getPhaseProgress = (phase: any) => {
     const completedTasks = phase.tasks.filter((task: any) => task.completed).length;
     return { completed: completedTasks, total: phase.tasks.length };
+  };
+
+  const getTaskPlaceholder = (taskName: string) => {
+    const lowerName = taskName.toLowerCase();
+    if (lowerName.includes('timeline')) return "Enter timeline (e.g., March 15-17, 2024)";
+    if (lowerName.includes('location')) return "Enter location (e.g., San Francisco Convention Center)";
+    if (lowerName.includes('theme')) return "Enter theme (e.g., AI and Sustainability)";
+    if (lowerName.includes('size')) return "Enter size (e.g., 500 participants)";
+    return "Enter details...";
+  };
+
+  const handleEditTask = (taskId: string, currentDetails: string) => {
+    setEditingTask(taskId);
+    setEditValue(currentDetails || "");
+  };
+
+  const handleSaveEdit = (phaseId: string, taskId: string) => {
+    if (editValue.trim() === "") {
+      // If empty, remove the details entirely
+      updateTask(phaseId, taskId, { 
+        details: undefined,
+        source: undefined
+      });
+    } else {
+      updateTask(phaseId, taskId, { 
+        details: editValue,
+        source: 'manual'
+      });
+    }
+    setEditingTask(null);
+    setEditValue("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTask(null);
+    setEditValue("");
+  };
+
+  const handleClearDetails = (phaseId: string, taskId: string) => {
+    updateTask(phaseId, taskId, { 
+      details: undefined,
+      source: undefined
+    });
   };
 
   const filteredPhases = viewFilter === 'home'
@@ -77,8 +123,12 @@ export const ProjectPanel = () => {
 
       {/* Header */}
       <div className="p-6 bg-white/70 backdrop-blur-sm border-b border-blue-100">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h1>
-        <p className="text-gray-600">Manage your project phases and tasks with AI assistance</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h1>
+            <p className="text-gray-600">Manage your project phases and tasks with AI assistance</p>
+          </div>
+        </div>
       </div>
 
       {/* Project Phases */}
@@ -147,12 +197,83 @@ export const ProjectPanel = () => {
                                 >
                                   {task.name}
                                 </span>
-                                {task.details && (
+                                {editingTask === task.id ? (
+                                  <div className="mt-1 flex items-center space-x-2">
+                                    <Info className="w-3 h-3 text-blue-600" />
+                                    <div className="flex items-center space-x-2 flex-1">
+                                      <Input
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        className="text-xs border-blue-200 focus:border-blue-400"
+                                        placeholder={getTaskPlaceholder(task.name)}
+                                        onKeyPress={(e) => {
+                                          if (e.key === 'Enter') {
+                                            handleSaveEdit(phase.id, task.id);
+                                          } else if (e.key === 'Escape') {
+                                            handleCancelEdit();
+                                          }
+                                        }}
+                                        autoFocus
+                                      />
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleSaveEdit(phase.id, task.id)}
+                                        className="h-6 px-2 bg-green-600 hover:bg-green-700"
+                                      >
+                                        <Save className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleCancelEdit}
+                                        className="h-6 px-2"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : task.details ? (
                                   <div className="mt-1 flex items-center space-x-1">
                                     <Info className="w-3 h-3 text-blue-600" />
-                                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                      {task.details}
-                                    </span>
+                                    <div className="flex items-center space-x-1">
+                                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                        {task.details}
+                                      </span>
+                                      {task.source && (
+                                        <span className="text-xs text-gray-400" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
+                                          {task.source === 'chatbot' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                                        </span>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleEditTask(task.id, task.details || "")}
+                                        className="h-4 w-4 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                      >
+                                        <Edit2 className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleClearDetails(phase.id, task.id)}
+                                        className="h-4 w-4 p-0 text-red-600 hover:text-red-800 hover:bg-red-100"
+                                        title="Clear details"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="mt-1 flex items-center space-x-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditTask(task.id, "")}
+                                      className="h-6 px-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                                    >
+                                      <Edit2 className="w-3 h-3 mr-1" />
+                                      Add details
+                                    </Button>
                                   </div>
                                 )}
                               </div>

@@ -78,6 +78,30 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/8b78dba3-32ed-423f-a550-9486cc142d02) and click on Share -> Publish.
 
+## Task Editing Features
+
+This project includes advanced task editing capabilities that allow you to:
+
+### Edit Task Details
+- **Inline Editing**: Click the edit icon (✏️) next to any task details to edit them inline
+- **Smart Placeholders**: Input fields show helpful examples based on the task type:
+  - Timeline: "Enter timeline (e.g., March 15-17, 2024)"
+  - Location: "Enter location (e.g., San Francisco Convention Center)"
+  - Theme: "Enter theme (e.g., AI and Sustainability)"
+  - Size: "Enter size (e.g., 500 participants)"
+
+### Source Tracking
+- **AI vs Manual**: Visual indicators show whether details came from the chatbot (🤖) or were manually edited (👤)
+- **Clear History**: Use the trash icon (🗑️) to remove task details entirely
+
+### Keyboard Shortcuts
+- **Enter**: Save changes
+- **Escape**: Cancel editing
+
+### Add Details to Empty Tasks
+- Tasks without details show an "Add details" button
+- Click to start editing and add information manually
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!

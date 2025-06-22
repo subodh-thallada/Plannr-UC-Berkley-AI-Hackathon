@@ -6,6 +6,7 @@ interface Task {
   completed: boolean;
   status: 'pending' | 'in-progress' | 'done';
   details?: string; // Add details field to store timeline/location info
+  source?: 'chatbot' | 'manual'; // Track the source of the details
 }
 
 interface Phase {
@@ -123,7 +124,8 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     updateTask(phaseId, taskId, { 
       details, 
       completed: true, 
-      status: 'done' 
+      status: 'done',
+      source: 'chatbot'
     });
   };
 
