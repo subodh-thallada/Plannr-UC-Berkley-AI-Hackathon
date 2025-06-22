@@ -18,7 +18,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
     {
       id: '1',
       type: 'bot',
-      content: "Hi! I'm your project assistant. I can help you manage tasks, create calendar events, and automate your workflow. Try saying something like 'Timeline: March 15-17, 2024' or 'Location: San Francisco Convention Center' and I'll automatically update your project tasks!",
+      content: "Hi! I'm your project assistant. I can help you manage tasks, create calendar events, and automate your workflow. Just tell me about your project details naturally, and I'll format them clearly and automatically update your project tasks!",
       timestamp: new Date()
     }
   ]);
@@ -57,19 +57,24 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
       
       setMessages(prev => [...prev, botResponse]);
 
-      // Handle task updates if detected
-      if (result.taskUpdate) {
-        addTaskDetails(result.taskUpdate.phaseId, result.taskUpdate.taskId, result.taskUpdate.details);
+      // Handle multiple task updates if detected
+      if (result.taskUpdates && result.taskUpdates.length > 0) {
+        // Apply all task updates
+        result.taskUpdates.forEach(taskUpdate => {
+          addTaskDetails(taskUpdate.phaseId, taskUpdate.taskId, taskUpdate.details);
+        });
         
-        // Add a system message to confirm the task update
-        const updateMessage: ChatMessage = {
-          id: (Date.now() + 2).toString(),
-          type: 'bot',
-          content: `✅ I've automatically updated your ${result.taskUpdate.type} task with: "${result.taskUpdate.details}"`,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, updateMessage]);
+        // Add confirmation messages for each update
+        result.taskUpdates.forEach((taskUpdate, index) => {
+          const updateMessage: ChatMessage = {
+            id: (Date.now() + 2 + index).toString(),
+            type: 'bot',
+            content: `✅ I've automatically updated your ${taskUpdate.type} task with: "${taskUpdate.details}"`,
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, updateMessage]);
+        });
       }
     } catch (error) {
       console.error('Error getting response:', error);
@@ -186,7 +191,7 @@ export const ChatPanel = ({ onClose }: ChatPanelProps) => {
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type your command here... (e.g., 'Timeline: March 15-17')"
+            placeholder="Tell me about your project details naturally..."
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             className="border-blue-200 focus:border-blue-400"
             disabled={isLoading}
