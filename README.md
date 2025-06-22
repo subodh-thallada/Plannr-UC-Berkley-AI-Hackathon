@@ -18,6 +18,54 @@ This project uses Google's Gemini API for the chatbot functionality. To get it w
    ```
 4. Restart your development server
 
+### VAPI API Setup (for venue calling)
+
+This project uses VAPI for automated venue calling. To get it working:
+
+1. **Get your API key**:
+   - Visit [VAPI.ai](https://vapi.ai/) to create an account
+   - Go to the [VAPI Dashboard](https://dashboard.vapi.ai/)
+   - Get your API key from the API Keys section
+
+2. **Create an Assistant**:
+   - In the VAPI Dashboard, go to "Assistants" section
+   - Click "Create Assistant"
+   - Name it "Venue Booking Assistant"
+   - Set model to "OpenAI GPT-4"
+   - Add this system prompt:
+     ```
+     You are a helpful assistant calling to book a venue. 
+     
+     Call the venue at +16479361710 and ask about:
+     1. Availability for the event date
+     2. Capacity and pricing
+     3. Booking requirements and deposit
+     4. Any special requirements or restrictions
+     
+     Be professional, friendly, and gather all necessary information for booking.
+     ```
+   - Set first message to: "Hi, I'm calling to inquire about booking your venue for an upcoming event. Could you tell me about your availability and pricing?"
+   - Choose voice: "Jennifer"
+   - Save and copy the Assistant ID
+
+3. **Get a Phone Number**:
+   - Go to "Phone Numbers" section
+   - Click "Get Phone Number"
+   - Choose a number that supports outbound calls
+   - Copy the Phone Number ID
+
+4. **Configure environment variables**:
+   - Add these to your `.env` file:
+     ```
+     VITE_VAPI_API_KEY=your_vapi_api_key_here
+     VITE_VAPI_ASSISTANT_ID=your_assistant_id_here
+     VITE_VAPI_PHONE_NUMBER_ID=your_phone_number_id_here
+     ```
+
+5. **Restart your development server**
+
+**Note**: If any of these are not configured, the venue calling feature will show specific error messages asking you to configure the missing values.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
@@ -107,6 +155,14 @@ This project includes advanced task editing capabilities that allow you to:
 - **Visual Preview**: See color swatches and hex codes
 - **AI Integration**: Chatbot can detect and set colors from hex codes
 - **Manual Editing**: Use color pickers to customize your brand colors
+
+### Venue Booking
+- **Automated Calling**: Click "Call Venue" to automatically call +16479361710
+- **AI Assistant**: VAPI-powered AI handles the conversation professionally
+- **Real-time Status**: See call status (calling, connected, ended, error)
+- **Task Integration**: Automatically updates task status when call completes
+
+**Note**: Requires VAPI API key in environment variables (`VITE_VAPI_API_KEY`)
 
 ## Can I connect a custom domain to my Lovable project?
 

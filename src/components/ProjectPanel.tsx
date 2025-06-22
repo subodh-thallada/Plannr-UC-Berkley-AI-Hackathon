@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Settings, Info, Edit2, Save, X, Bot, User, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Settings, Info, Edit2, Save, X, Bot, User, Trash2, Phone } from "lucide-react";
 import { useProject } from "@/lib/project-context";
+import { callVenue, getCurrentCallStatus, endCall, CallStatus, callRestaurant } from "@/lib/vapi-service";
 
 export const ProjectPanel = () => {
   const [viewFilter, setViewFilter] = useState<'home' | '1' | '2' | '3'>('home');
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editingColors, setEditingColors] = useState<{ primary: string; secondary: string }>({ primary: '#3B82F6', secondary: '#10B981' });
+  const [callStatus, setCallStatus] = useState<CallStatus>({ id: '', status: 'idle' });
   const { phases, togglePhase, toggleTask, updateTask } = useProject();
 
   const getStatusColor = (status: 'pending' | 'in-progress' | 'done') => {
@@ -105,6 +107,94 @@ export const ProjectPanel = () => {
     });
   };
 
+  const handleCallVenue = async () => {
+    try {
+      const result = await callVenue();
+      setCallStatus(result);
+      
+      if (result.status === 'connected') {
+        // Mark the task as in progress
+        updateTask('2', '2-4', { 
+          status: 'in-progress',
+          details: 'Call in progress to +17165134580'
+        });
+      } else if (result.status === 'error') {
+        console.error('Call failed:', result.error);
+        // Update task with error details
+        updateTask('2', '2-4', { 
+          status: 'pending',
+          details: `Call failed: ${result.error}`
+        });
+      }
+    } catch (error) {
+      console.error('Error calling venue:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start call';
+      setCallStatus({ id: '', status: 'error', error: errorMessage });
+      
+      // Update task with error details
+      updateTask('2', '2-4', { 
+        status: 'pending',
+        details: `Call error: ${errorMessage}`
+      });
+    }
+  };
+
+  const handleEndCall = async () => {
+    await endCall();
+    setCallStatus({ id: '', status: 'idle' });
+    
+    // Mark the task as completed
+    updateTask('2', '2-4', { 
+      status: 'done',
+      completed: true,
+      details: 'Venue booking call completed'
+    });
+  };
+
+  const handleCallRestaurant = async () => {
+    try {
+      const result = await callRestaurant();
+      setCallStatus(result);
+      
+      if (result.status === 'connected') {
+        // Mark the task as in progress
+        updateTask('2', '2-5', { 
+          status: 'in-progress',
+          details: 'Call in progress to restaurant at +17165134580'
+        });
+      } else if (result.status === 'error') {
+        console.error('Restaurant call failed:', result.error);
+        // Update task with error details
+        updateTask('2', '2-5', { 
+          status: 'pending',
+          details: `Restaurant call failed: ${result.error}`
+        });
+      }
+    } catch (error) {
+      console.error('Error calling restaurant:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start restaurant call';
+      setCallStatus({ id: '', status: 'error', error: errorMessage });
+      
+      // Update task with error details
+      updateTask('2', '2-5', { 
+        status: 'pending',
+        details: `Restaurant call error: ${errorMessage}`
+      });
+    }
+  };
+
+  const handleEndRestaurantCall = async () => {
+    await endCall();
+    setCallStatus({ id: '', status: 'idle' });
+    
+    // Mark the task as completed
+    updateTask('2', '2-5', { 
+      status: 'done',
+      completed: true,
+      details: 'Restaurant meal planning call completed'
+    });
+  };
+
   const filteredPhases = viewFilter === 'home'
     ? phases
     : phases.filter(p => p.id === viewFilter);
@@ -143,8 +233,8 @@ export const ProjectPanel = () => {
       <div className="p-6 bg-white/70 backdrop-blur-sm border-b border-blue-100">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h1>
-            <p className="text-gray-600">Manage your project phases and tasks with AI assistance</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h1>
+        <p className="text-gray-600">Manage your project phases and tasks with AI assistance</p>
           </div>
         </div>
       </div>
@@ -349,9 +439,9 @@ export const ProjectPanel = () => {
                                   <div className="mt-1 flex items-center space-x-1">
                                     <Info className="w-3 h-3 text-blue-600" />
                                     <div className="flex items-center space-x-1">
-                                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                        {task.details}
-                                      </span>
+                                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                      {task.details}
+                                    </span>
                                       {task.source && (
                                         <span className="text-xs text-gray-400" title={task.source === 'chatbot' ? 'Added by AI' : 'Manually edited'}>
                                           {task.source === 'chatbot' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
@@ -399,6 +489,119 @@ export const ProjectPanel = () => {
                               >
                                 {getStatusLabel(task.status)}
                               </Badge>
+                              
+                              {/* Call Venue Button for Book Venue task */}
+                              {task.name === 'Book Venue' && (
+                                <div className="flex items-center space-x-1">
+                                  {callStatus.status === 'idle' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleCallVenue}
+                                      className="h-6 px-2 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                      title="Call venue at +17165134580"
+                                    >
+                                      <Phone className="w-3 h-3 mr-1" />
+                                      Call Venue
+                                    </Button>
+                                  )}
+                                  
+                                  {callStatus.status === 'calling' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled
+                                      className="h-6 px-2 text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                    >
+                                      <Phone className="w-3 h-3 mr-1 animate-pulse" />
+                                      Calling...
+                                    </Button>
+                                  )}
+                                  
+                                  {callStatus.status === 'connected' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleEndCall}
+                                      className="h-6 px-2 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                                      title="End call"
+                                    >
+                                      <Phone className="w-3 h-3 mr-1" />
+                                      End Call
+                                    </Button>
+                                  )}
+                                  
+                                  {callStatus.status === 'error' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleCallVenue}
+                                      className="h-6 px-2 text-xs bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                                      title={`Retry call: ${callStatus.error}`}
+                                    >
+                                      <Phone className="w-3 h-3 mr-1" />
+                                      Retry
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Call Restaurant Button for Plan Meals task */}
+                              {task.name === 'Plan Meals' && (
+                                <div className="flex items-center space-x-1">
+                                  {callStatus.status === 'idle' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleCallRestaurant}
+                                      className="h-6 px-2 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                      title="Call restaurant at +17165134580"
+                                    >
+                                      <Phone className="w-3 h-3 mr-1" />
+                                      Call Restaurant
+                                    </Button>
+                                  )}
+                                  
+                                  {callStatus.status === 'calling' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled
+                                      className="h-6 px-2 text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                    >
+                                      <Phone className="w-3 h-3 mr-1 animate-pulse" />
+                                      Calling...
+                                    </Button>
+                                  )}
+                                  
+                                  {callStatus.status === 'connected' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleEndRestaurantCall}
+                                      className="h-6 px-2 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                                      title="End call"
+                                    >
+                                      <Phone className="w-3 h-3 mr-1" />
+                                      End Call
+                                    </Button>
+                                  )}
+                                  
+                                  {callStatus.status === 'error' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleCallRestaurant}
+                                      className="h-6 px-2 text-xs bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                                      title={`Retry call: ${callStatus.error}`}
+                                    >
+                                      <Phone className="w-3 h-3 mr-1" />
+                                      Retry
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                              
                               <Button
                                 variant="ghost"
                                 size="sm"

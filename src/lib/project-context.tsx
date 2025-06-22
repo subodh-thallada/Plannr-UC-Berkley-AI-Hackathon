@@ -64,7 +64,8 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
         { id: '2-1', name: 'Make website', completed: false, status: 'pending' },
         { id: '2-2', name: 'Make marketing posts and images', completed: false, status: 'pending' },
         { id: '2-3', name: 'Make sponsorship package', completed: false, status: 'pending' },
-        { id: '2-4', name: 'Make Devpost', completed: false, status: 'pending' },
+        { id: '2-4', name: 'Book Venue', completed: false, status: 'pending' },
+        { id: '2-5', name: 'Plan Meals', completed: false, status: 'pending' },
       ]
     },
     {
